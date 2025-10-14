@@ -86,6 +86,15 @@ footer a{color:#b78cff;text-decoration:none}
 <div id="lista-grupos"></div>
 <a class="botao" href="https://linkfly.to/grifinoria" target="_blank">Renda extra em casa💰🧑🏻‍💻</a>
 
+<div id="modalTermos" class="modal">
+  <div class="modal-content">
+    <span class="close-modal">❌</span>
+    <h3 id="modalTitulo"></h3>
+    <div id="modalTexto" style="text-align:left; max-height:300px; overflow-y:auto;"></div>
+  </div>
+</div>
+
+
 <!-- Modal do VIP -->
 <style>
   @keyframes fadeZoom {
@@ -154,7 +163,8 @@ meusBtn.addEventListener('click', (e) => {
 </script>
 
 <footer>
-  Blog · Termos de Uso · Política de Privacidade · FAQ<br>
+  Blog · <a href="#" id="termosLink">Termos de Uso</a> · 
+  <a href="#" id="privacidadeLink">Política de Privacidade</a> · FAQ<br>
   © COPYRIGHT 2025 - <a href="https://saniofc.github.io/griffinoria/" target="_blank">saniofc.github.io/griffinoria/</a>
 </footer>
 
@@ -514,6 +524,36 @@ localStorage.setItem('gruposEnviados', JSON.stringify(enviados));
 carregarGrupos(); // recarrega do Firebase + localStorage  
   modal.style.display = 'none';
 };
+
+const modalTermos = document.getElementById('modalTermos');
+const modalTitulo = document.getElementById('modalTitulo');
+const modalTexto = document.getElementById('modalTexto');
+const closeModal = modalTermos.querySelector('.close-modal');
+
+// Abrir Termos de Uso
+document.getElementById('termosLink').onclick = (e) => {
+  e.preventDefault();
+  modalTitulo.textContent = "Termos de Uso";
+  modalTexto.innerHTML = `
+    <p>Aqui vão os termos de uso do seu site...</p>
+    <p>Exemplo: Ao usar este site, você concorda com...</p>
+  `;
+  modalTermos.style.display = "flex";
+};
+
+// Abrir Política de Privacidade
+document.getElementById('privacidadeLink').onclick = (e) => {
+  e.preventDefault();
+  modalTitulo.textContent = "Política de Privacidade";
+  modalTexto.innerHTML = `
+    <p>Aqui vai a política de privacidade do seu site...</p>
+    <p>Exemplo: Seus dados são armazenados de forma segura...</p>
+  `;
+  modalTermos.style.display = "flex";
+};
+
+// Fechar modal
+closeModal.onclick = () => modalTermos.style.display = "none";
 
 // ================== MEUS GRUPOS ================== //
 meusBtn.onclick = () => {
