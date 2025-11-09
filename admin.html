@@ -39,13 +39,13 @@
             color: #555;
         }
 
-        input[type="text"], textarea {
+        input[type="text"], input[type="url"], textarea { /* Adicionado input[type="url"] */
             width: 100%;
             padding: 10px;
             margin-bottom: 20px;
             border: 1px solid #ccc;
             border-radius: 6px;
-            box-sizing: border-box; /* Inclui padding e borda na largura total */
+            box-sizing: border-box;
         }
 
         textarea {
@@ -56,7 +56,7 @@
         .save-button {
             display: block;
             width: 100%;
-            background-color: #007bff; /* Cor de ADM (azul) */
+            background-color: #007bff;
             color: white;
             padding: 12px 20px;
             border: none;
@@ -76,6 +76,17 @@
             margin-top: -15px;
             margin-bottom: 20px;
         }
+        
+        /* Estilo para a mensagem de sucesso */
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            display: none; /* Escondido por padrão */
+        }
     </style>
 </head>
 <body>
@@ -83,22 +94,77 @@
     <div class="admin-container">
         <h2>Painel Administrativo da Loja TikTok</h2>
         
-        <form action="#" method="POST"> 
+        <form id="adminForm"> 
             
             <label for="product_name">Nome do Produto:</label>
-            <input type="text" id="product_name" name="product_name" placeholder="Ex: Mini Fone Bluetooth TWS">
+            <input type="text" id="product_name" name="product_name" placeholder="Ex: Mini Fone Bluetooth TWS" required>
 
             <label for="tiktok_link">Link do Produto no TikTok Shop:</label>
-            <input type="text" id="tiktok_link" name="tiktok_link" placeholder="https://vm.tiktok.com/ZMHc3BuPaA6FP-oYSaV/">
+            <input type="url" id="tiktok_link" name="tiktok_link" placeholder="https://vm.tiktok.com/ZMHc3BuPaA6FP-oYSaV/" required>
             <p class="helper-text">Insira o link completo do produto.</p>
 
             <label for="image_urls">URLs das Imagens (uma por linha):</label>
-            <textarea id="image_urls" name="image_urls" placeholder="https://exemplo.com/foto1.jpg&#10;https://exemplo.com/foto2.jpg&#10;https://exemplo.com/foto3.jpg"></textarea>
+            <textarea id="image_urls" name="image_urls" placeholder="https://exemplo.com/foto1.jpg&#10;https://exemplo.com/foto2.jpg&#10;https://exemplo.com/foto3.jpg" required></textarea>
             <p class="helper-text">Coloque a URL completa de cada imagem, uma em cada linha, para o carrossel.</p>
 
             <button type="submit" class="save-button">Salvar e Atualizar Site</button>
+            
+            <p class="message" id="saveMessage">
+                Produto atualizado no seu navegador! Visite a <a href="index.html">página principal</a> para ver as mudanças.
+            </p>
         </form>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('adminForm');
+            const message = document.getElementById('saveMessage');
+            
+            // Elementos do formulário
+            const productNameInput = document.getElementById('product_name');
+            const tiktokLinkInput = document.getElementById('tiktok_link');
+            const imageUrlsTextarea = document.getElementById('image_urls');
+
+            // 1. Tenta carregar dados existentes no formulário ao abrir
+            const storedData = localStorage.getItem('tiktokShopProduct');
+            if (storedData) {
+                try {
+                    const data = JSON.parse(storedData);
+                    productNameInput.value = data.name || '';
+                    tiktokLinkInput.value = data.link || '';
+                    imageUrlsTextarea.value = data.images.join('\n') || '';
+                } catch (e) {
+                    console.error("Erro ao carregar dados do Local Storage:", e);
+                }
+            }
+
+            // 2. Lógica para salvar dados no Local Storage
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); // Impede o envio padrão que causava o erro 405
+
+                const imageUrls = imageUrlsTextarea.value
+                    .split('\n')
+                    .map(url => url.trim())
+                    .filter(url => url !== '');
+
+                // Objeto com os dados a serem salvos
+                const productData = {
+                    name: productNameInput.value,
+                    link: tiktokLinkInput.value,
+                    images: imageUrls
+                };
+
+                // Salva os dados no Local Storage
+                localStorage.setItem('tiktokShopProduct', JSON.stringify(productData));
+
+                // Exibe mensagem de sucesso
+                message.style.display = 'block';
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 5000); // Esconde a mensagem após 5 segundos
+            });
+        });
+    </script>
 
 </body>
 </html>
