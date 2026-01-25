@@ -2,128 +2,213 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mega Zombie Combat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Crazy Zombie Mobile</title>
     <style>
-        body { margin: 0; background: #111; color: white; display: flex; flex-direction: column; align-items: center; font-family: sans-serif; overflow: hidden; }
-        canvas { background: url('https://img.freepik.com/free-photo/dark-street-wet-asphalt-reflections-rays-water-night-city-view-with-night-lights_1217-2516.jpg'); background-size: cover; border: 4px solid #333; margin-top: 20px; }
-        .ui { position: absolute; top: 30px; left: 50px; background: rgba(0,0,0,0.7); padding: 15px; border-radius: 10px; border-left: 5px solid #fe2c55; }
-        .controls-hint { margin-top: 10px; color: #888; }
+        * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; }
+        body { margin: 0; background: #000; overflow: hidden; font-family: sans-serif; }
+        
+        canvas { 
+            display: block; 
+            background: #222; 
+            border-bottom: 2px solid #fe2c55;
+        }
+
+        /* Controles Mobile */
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 30px;
+            pointer-events: none;
+        }
+
+        .joystick-area {
+            width: 120px;
+            height: 120px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            position: relative;
+            pointer-events: auto;
+        }
+
+        #stick {
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            top: 35px;
+            left: 35px;
+        }
+
+        .btn-attack {
+            width: 80px;
+            height: 80px;
+            background: #fe2c55;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            pointer-events: auto;
+            box-shadow: 0 0 20px rgba(254, 44, 85, 0.5);
+        }
+
+        .ui {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: white;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
 
     <div class="ui">
-        <div>Kills: <span id="score">0</span></div>
-        <div>HP: <progress id="hp" value="100" max="100" style="width: 200px;"></progress></div>
-        <div class="controls-hint">WASD para mover | J para Atacar</div>
+        Kills: <span id="score">0</span> | HP: <span id="hp">100</span>%
     </div>
 
-    <canvas id="gameCanvas" width="800" height="450"></canvas>
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="controls">
+        <div class="joystick-area" id="joyArea">
+            <div id="stick"></div>
+        </div>
+        <div class="btn-attack" id="attackBtn">ATAQUE</div>
+    </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // Configurações do Personagem
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight * 0.7;
+
         const player = {
-            x: 100, y: 300, w: 40, h: 60,
-            speed: 5, hp: 100,
+            x: 100, y: 150, w: 30, h: 50,
+            hp: 100, score: 0,
+            dirX: 0, dirY: 0,
             isAttacking: false,
-            dir: 1 // 1 para direita, -1 para esquerda
+            facing: 1
         };
 
         const enemies = [];
-        let score = 0;
-        const keys = {};
 
-        // Inputs
-        window.onkeydown = (e) => keys[e.key.toLowerCase()] = true;
-        window.onkeyup = (e) => keys[e.key.toLowerCase()] = false;
+        // --- Lógica do Joystick ---
+        const joyArea = document.getElementById('joyArea');
+        const stick = document.getElementById('stick');
+        
+        joyArea.addEventListener('touchstart', handleMove);
+        joyArea.addEventListener('touchmove', handleMove);
+        joyArea.addEventListener('touchend', () => {
+            player.dirX = 0; player.dirY = 0;
+            stick.style.top = '35px'; stick.style.left = '35px';
+        });
+
+        function handleMove(e) {
+            const touch = e.touches[0];
+            const rect = joyArea.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            let deltaX = touch.clientX - centerX;
+            let deltaY = touch.clientY - centerY;
+            
+            const dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+            const maxDist = 40;
+
+            if (dist > maxDist) {
+                deltaX *= maxDist / dist;
+                deltaY *= maxDist / dist;
+            }
+
+            stick.style.left = (35 + deltaX) + 'px';
+            stick.style.top = (35 + deltaY) + 'px';
+
+            player.dirX = deltaX / 10;
+            player.dirY = deltaY / 10;
+            if (deltaX !== 0) player.facing = deltaX > 0 ? 1 : -1;
+        }
+
+        // --- Lógica de Ataque ---
+        const attackBtn = document.getElementById('attackBtn');
+        attackBtn.addEventListener('touchstart', () => {
+            if (!player.isAttacking) {
+                player.isAttacking = true;
+                setTimeout(() => player.isAttacking = false, 200);
+            }
+        });
 
         function spawnEnemy() {
-            enemies.push({
-                x: canvas.width + 50,
-                y: Math.random() * (canvas.height - 100) + 50,
-                w: 40, h: 60,
-                speed: 1.5 + (score * 0.1),
-                hp: 20
-            });
+            if (enemies.length < 5) {
+                enemies.push({
+                    x: Math.random() > 0.5 ? -20 : canvas.width + 20,
+                    y: Math.random() * canvas.height,
+                    hp: 20, speed: 1.5
+                });
+            }
         }
 
         function update() {
-            // Movimentação
-            if (keys['w'] && player.y > 50) player.y -= player.speed;
-            if (keys['s'] && player.y < canvas.height - player.h) player.y += player.speed;
-            if (keys['a']) { player.x -= player.speed; player.dir = -1; }
-            if (keys['d']) { player.x += player.speed; player.dir = 1; }
+            player.x += player.dirX;
+            player.y += player.dirY;
 
-            // Ataque (Tecla J)
-            if (keys['j'] && !player.isAttacking) {
-                player.isAttacking = true;
-                setTimeout(() => player.isAttacking = false, 300);
-            }
+            enemies.forEach((en, i) => {
+                // Persegue jogador
+                const dx = player.x - en.x;
+                const dy = player.y - en.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                en.x += (dx/dist) * en.speed;
+                en.y += (dy/dist) * en.speed;
 
-            // Lógica dos Inimigos
-            enemies.forEach((en, index) => {
-                // Seguir jogador
-                if (en.x > player.x) en.x -= en.speed;
-                else en.x += en.speed;
-                if (en.y > player.y) en.y -= en.speed;
-                else en.y += en.speed;
-
-                // Colisão de Ataque
+                // Checa se tomou porrada
                 if (player.isAttacking) {
-                    let range = player.dir === 1 ? player.x + player.w : player.x - 40;
-                    if (Math.abs(en.x - range) < 40 && Math.abs(en.y - player.y) < 30) {
-                        en.hp -= 2;
-                        en.x += player.dir * 20; // Knockback
+                    const hitX = player.facing === 1 ? player.x + 30 : player.x - 30;
+                    const distHit = Math.sqrt((en.x - hitX)**2 + (en.y - player.y)**2);
+                    if (distHit < 40) {
+                        en.hp -= 5;
+                        en.x -= (dx/dist) * 30; // Empurrão
                     }
                 }
 
-                // Dano no Jogador
-                if (Math.abs(en.x - player.x) < 20 && Math.abs(en.y - player.y) < 20) {
-                    player.hp -= 0.2;
-                    document.getElementById('hp').value = player.hp;
+                // Dano no jogador
+                if (dist < 20) {
+                    player.hp -= 0.1;
+                    document.getElementById('hp').innerText = Math.floor(player.hp);
                 }
 
                 if (en.hp <= 0) {
-                    enemies.splice(index, 1);
-                    score++;
-                    document.getElementById('score').innerText = score;
+                    enemies.splice(i, 1);
+                    player.score++;
+                    document.getElementById('score').innerText = player.score;
                 }
             });
 
-            if (Math.random() < 0.02) spawnEnemy();
+            if (Math.random() < 0.03) spawnEnemy();
             if (player.hp <= 0) location.reload();
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Desenhar Jogador
-            ctx.fillStyle = player.isAttacking ? "yellow" : "#00f0ff";
-            ctx.fillRect(player.x, player.y, player.w, player.h);
-            // "Braço" de ataque
-            if (player.isAttacking) {
-                ctx.fillStyle = "white";
-                ctx.fillRect(player.dir === 1 ? player.x + player.w : player.x - 30, player.y + 20, 30, 10);
-            }
+            // Jogador
+            ctx.fillStyle = player.isAttacking ? "yellow" : "#fe2c55";
+            ctx.fillRect(player.x - 15, player.y - 25, 30, 50);
 
-            // Desenhar Inimigos (Zumbis)
+            // Inimigos
             ctx.fillStyle = "#4ade80";
             enemies.forEach(en => {
-                ctx.fillRect(en.x, en.y, en.w, en.h);
-                // Barra de vida pequena em cima do zumbi
-                ctx.fillStyle = "red";
-                ctx.fillRect(en.x, en.y - 10, (en.hp/20)*40, 5);
-                ctx.fillStyle = "#4ade80";
+                ctx.fillRect(en.x - 15, en.y - 25, 30, 50);
             });
 
-            requestAnimationFrame(() => {
-                update();
-                draw();
-            });
+            update();
+            requestAnimationFrame(draw);
         }
 
         draw();
