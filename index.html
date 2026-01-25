@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Live Empurra-Empurra Real</title>
+    <title>Live Empurra-Empurra</title>
     <style>
         * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; }
         body { margin: 0; background: #000; color: white; font-family: 'Arial Black', sans-serif; overflow: hidden; }
@@ -38,42 +38,50 @@
             z-index: 50;
             transform: translateX(-50%);
             transition: left 0.3s ease-in-out;
-            box-shadow: 0 0 30px rgba(255,255,255,0.8);
+            box-shadow: 0 0 20px rgba(255,255,255,0.8);
         }
 
-        /* Personagens Reais */
-        .pusher {
+        /* Container das Imagens */
+        .pusher-container {
             position: absolute;
-            height: 65vh; /* Aumentado para ocupar bem a tela */
-            bottom: 5%;
+            bottom: 10%;
+            height: 60vh;
+            width: 200px;
             z-index: 40;
-            transition: right 0.3s ease-in-out, left 0.3s ease-in-out;
-            pointer-events: none;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
         }
 
-        /* Menina empurrando */
-        #girl-img {
-            right: -20px; /* Colada no divisor */
+        #girl-cont { right: 0px; } /* Encostado no divider pela esquerda */
+        #boy-cont { left: 0px; }  /* Encostado no divider pela direita */
+
+        .pusher-img {
+            height: 100%;
+            max-width: none;
+            object-fit: contain;
         }
 
-        /* Menino empurrando */
-        #boy-img {
-            left: -20px; /* Colado no divisor */
+        /* Estilo para quando a imagem falha (Plano B) */
+        .fallback-draw {
+            width: 80px;
+            height: 250px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 40px 40px 0 0;
+            display: none; /* Só aparece via JS se a imagem falhar */
         }
 
-        .label { font-size: 50px; position: absolute; top: 40px; text-shadow: 3px 3px #000; z-index: 60; }
-        .score { font-size: 110px; font-weight: 900; text-shadow: 5px 5px #000; z-index: 60; }
+        .label { font-size: 40px; position: absolute; top: 40px; text-shadow: 2px 2px #000; z-index: 60; }
+        .score { font-size: 100px; text-shadow: 4px 4px #000; z-index: 60; }
 
         .controls {
             position: fixed; bottom: 30px; width: 100%;
-            display: flex; justify-content: space-around; align-items: center;
-            padding: 0 20px; z-index: 100;
+            display: flex; justify-content: space-around; z-index: 100;
         }
 
         .btn {
             padding: 20px 30px; border-radius: 20px; border: 4px solid #fff;
             color: white; font-size: 20px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
         
         .btn-girl { background: #ff3399; }
@@ -88,7 +96,10 @@
         <div id="girls-side" class="side">
             <div class="label" style="left: 20px;">GIRLS</div>
             <div id="g-score" class="score">0</div>
-            <img id="girl-img" class="pusher" src="https://i.ibb.co/VqXmC2q/girl-push.png" alt="Girl">
+            <div id="girl-cont" class="pusher-container">
+                <img id="girl-img" class="pusher-img" src="https://i.imgur.com/G57q0YF.png" onerror="imgError(this)">
+                <div class="fallback-draw"></div>
+            </div>
         </div>
 
         <div id="divider"></div>
@@ -96,7 +107,10 @@
         <div id="boys-side" class="side">
             <div class="label" style="right: 20px;">BOYS</div>
             <div id="b-score" class="score">0</div>
-            <img id="boy-img" class="pusher" src="https://i.ibb.co/yYyW9k8/boy-push.png" alt="Boy">
+            <div id="boy-cont" class="pusher-container">
+                <img id="boy-img" class="pusher-img" src="https://i.imgur.com/39Acl76.png" onerror="imgError(this)">
+                <div class="fallback-draw"></div>
+            </div>
         </div>
     </div>
 
@@ -107,32 +121,25 @@
     </div>
 
     <script>
-        let scoreG = 0;
-        let scoreB = 0;
-        let position = 50; 
-        let autoMode = false;
+        let scoreG = 0, scoreB = 0, position = 50, autoMode = false;
+
+        function imgError(img) {
+            img.style.display = 'none'; // Esconde a imagem quebrada
+            img.nextElementSibling.style.display = 'block'; // Mostra o boneco de reserva
+        }
 
         function push(gender) {
-            if (gender === 'girl') {
-                scoreG++;
-                position += 1.5; // Menina empurra para a direita
-            } else {
-                scoreB++;
-                position -= 1.5; // Menino empurra para a esquerda
-            }
+            if (gender === 'girl') { scoreG++; position += 1.5; } 
+            else { scoreB++; position -= 1.5; }
 
-            // Limites de segurança para não sumir da tela
-            if (position > 88) position = 88;
-            if (position < 12) position = 12;
-
+            if (position > 90) position = 90;
+            if (position < 10) position = 10;
             update();
         }
 
         function update() {
             document.getElementById('g-score').innerText = scoreG;
             document.getElementById('b-score').innerText = scoreB;
-            
-            // Move tudo simultaneamente
             document.getElementById('divider').style.left = position + '%';
             document.getElementById('girls-side').style.width = position + '%';
             document.getElementById('boys-side').style.width = (100 - position) + '%';
@@ -145,13 +152,7 @@
             btn.style.background = autoMode ? "#28a745" : "#444";
         }
 
-        // Simulação automática
-        setInterval(() => {
-            if (autoMode) {
-                const side = Math.random() > 0.5 ? 'girl' : 'boy';
-                push(side);
-            }
-        }, 500);
+        setInterval(() => { if (autoMode) push(Math.random() > 0.5 ? 'girl' : 'boy'); }, 600);
     </script>
 </body>
 </html>
