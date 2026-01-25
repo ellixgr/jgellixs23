@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Live Empurra-Empurra</title>
+    <title>Live Empurra-Empurra Real</title>
     <style>
         * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; }
         body { margin: 0; background: #000; color: white; font-family: 'Arial Black', sans-serif; overflow: hidden; }
@@ -15,7 +15,6 @@
             background: #111;
         }
 
-        /* Lados Dinâmicos */
         .side {
             height: 100%;
             transition: width 0.3s ease-in-out;
@@ -30,38 +29,41 @@
         #girls-side { background-color: #ff3399; width: 50%; }
         #boys-side { background-color: #007bff; width: 50%; }
 
-        /* Divisor Central */
         #divider {
             position: absolute;
             top: 0; bottom: 0;
             left: 50%;
-            width: 12px;
+            width: 15px;
             background: #fff;
-            z-index: 20;
+            z-index: 50;
             transform: translateX(-50%);
             transition: left 0.3s ease-in-out;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            box-shadow: 0 0 30px rgba(255,255,255,0.8);
         }
 
-        /* Silhuetas em CSS (Para nunca quebrar) */
+        /* Personagens Reais */
         .pusher {
-            width: 150px;
-            height: 300px;
             position: absolute;
-            bottom: 20%;
-            z-index: 10;
+            height: 65vh; /* Aumentado para ocupar bem a tela */
+            bottom: 5%;
+            z-index: 40;
+            transition: right 0.3s ease-in-out, left 0.3s ease-in-out;
+            pointer-events: none;
         }
 
-        /* Representação da Menina (Rosa) */
-        .girl-svg { right: 10px; fill: #fff; transform: scaleX(-1); }
-        /* Representação do Menino (Azul) */
-        .boy-svg { left: 10px; fill: #fff; }
+        /* Menina empurrando */
+        #girl-img {
+            right: -20px; /* Colada no divisor */
+        }
 
-        /* Placar e Texto */
-        .label { font-size: 50px; margin-top: -100px; text-shadow: 3px 3px #000; z-index: 30; }
-        .score { font-size: 100px; font-weight: 900; text-shadow: 5px 5px #000; z-index: 30; }
+        /* Menino empurrando */
+        #boy-img {
+            left: -20px; /* Colado no divisor */
+        }
 
-        /* Painel de Controle */
+        .label { font-size: 50px; position: absolute; top: 40px; text-shadow: 3px 3px #000; z-index: 60; }
+        .score { font-size: 110px; font-weight: 900; text-shadow: 5px 5px #000; z-index: 60; }
+
         .controls {
             position: fixed; bottom: 30px; width: 100%;
             display: flex; justify-content: space-around; align-items: center;
@@ -69,16 +71,14 @@
         }
 
         .btn {
-            padding: 25px 35px; border-radius: 20px; border: 5px solid #fff;
-            color: white; font-size: 22px; font-weight: bold; cursor: pointer;
+            padding: 20px 30px; border-radius: 20px; border: 4px solid #fff;
+            color: white; font-size: 20px; font-weight: bold; cursor: pointer;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            transition: transform 0.1s;
         }
-        .btn:active { transform: scale(0.9); }
         
         .btn-girl { background: #ff3399; }
         .btn-boy { background: #007bff; }
-        .btn-auto { background: #444; font-size: 14px; padding: 20px; }
+        .btn-auto { background: #444; font-size: 12px; }
 
     </style>
 </head>
@@ -86,17 +86,17 @@
 
     <div id="game-container">
         <div id="girls-side" class="side">
-            <div class="label">GIRLS</div>
+            <div class="label" style="left: 20px;">GIRLS</div>
             <div id="g-score" class="score">0</div>
-            <svg class="pusher girl-svg" viewBox="0 0 24 24"><path d="M20.9,15.1L16.5,14l-1.4-3.4c-0.2-0.5-0.7-0.8-1.2-0.8H10c-0.5,0-1,0.3-1.2,0.8L7.4,14l-4.4,1.1c-0.5,0.1-0.9,0.7-0.8,1.2 c0.1,0.5,0.7,0.9,1.2,0.8l4.1-1l1,5.5c0.1,0.5,0.5,0.9,1,0.9h5c0.5,0,0.9-0.4,1-0.9l1-5.5l4.1,1c0.5,0.1,1-0.2,1.2-0.8 C21.8,15.8,21.4,15.3,20.9,15.1z M12,8c1.1,0,2-0.9,2-2s-0.9-2-2-2s-2,0.9-2,2S10.9,8,12,8z"/></svg>
+            <img id="girl-img" class="pusher" src="https://i.ibb.co/VqXmC2q/girl-push.png" alt="Girl">
         </div>
 
         <div id="divider"></div>
 
         <div id="boys-side" class="side">
-            <div class="label">BOYS</div>
+            <div class="label" style="right: 20px;">BOYS</div>
             <div id="b-score" class="score">0</div>
-            <svg class="pusher boy-svg" viewBox="0 0 24 24"><path d="M12,2c1.1,0,2,0.9,2,2s-0.9,2-2,2s-2-0.9-2-2S10.9,2,12,2z M20,10h-4v7c0,0.6-0.4,1-1,1h-1v4c0,0.6-0.4,1-1,1h-2 c-0.6,0-1-0.4-1-1v-4H9c-0.6,0-1-0.4-1-1v-7H4c-0.6,0-1-0.4-1-1V7c0-0.6,0.4-1,1-1h16c0.6,0,1,0.4,1,1v2C21,9.6,20.6,10,20,10z"/></svg>
+            <img id="boy-img" class="pusher" src="https://i.ibb.co/yYyW9k8/boy-push.png" alt="Boy">
         </div>
     </div>
 
@@ -115,15 +115,15 @@
         function push(gender) {
             if (gender === 'girl') {
                 scoreG++;
-                position += 1.0; // Menina empurra
+                position += 1.5; // Menina empurra para a direita
             } else {
                 scoreB++;
-                position -= 1.0; // Menino empurra
+                position -= 1.5; // Menino empurra para a esquerda
             }
 
-            // Limites da tela
-            if (position > 92) position = 92;
-            if (position < 8) position = 8;
+            // Limites de segurança para não sumir da tela
+            if (position > 88) position = 88;
+            if (position < 12) position = 12;
 
             update();
         }
@@ -132,6 +132,7 @@
             document.getElementById('g-score').innerText = scoreG;
             document.getElementById('b-score').innerText = scoreB;
             
+            // Move tudo simultaneamente
             document.getElementById('divider').style.left = position + '%';
             document.getElementById('girls-side').style.width = position + '%';
             document.getElementById('boys-side').style.width = (100 - position) + '%';
@@ -144,13 +145,13 @@
             btn.style.background = autoMode ? "#28a745" : "#444";
         }
 
-        // Loop Automático para simular interação
+        // Simulação automática
         setInterval(() => {
             if (autoMode) {
                 const side = Math.random() > 0.5 ? 'girl' : 'boy';
                 push(side);
             }
-        }, 600);
+        }, 500);
     </script>
 </body>
 </html>
