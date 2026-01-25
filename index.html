@@ -3,206 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minha Loja TikTok Shop</title>
+    <title>Mineradora Tycoon</title>
     <style>
         body {
-            font-family: sans-serif;
-            background-color: #f0f2f5;
+            font-family: 'Segoe UI', sans-serif;
+            background: #1a1a1a;
+            color: white;
             display: flex;
-            flex-wrap: wrap; /* Permite múltiplos cartões */
-            justify-content: center;
-            min-height: 100vh;
+            flex-direction: column;
+            align-items: center;
             margin: 0;
-            padding: 30px; /* Adiciona padding para os cartões */
+            height: 100vh;
         }
-
-        .product-card {
-            background-color: #fff;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            max-width: 350px;
-            width: 100%;
+        .header {
+            text-align: center;
             padding: 20px;
-            text-align: center;
-            margin: 15px; /* Espaçamento entre os cartões */
-            box-sizing: border-box;
         }
-
-        .product-title {
-            color: #333;
-            font-size: 1.4em;
-            margin-bottom: 10px;
-        }
-
-        /* Os estilos de carrossel (image-carousel, image-container, product-image, nav-button)
-           vão precisar ser gerados dinamicamente para cada cartão (veja o JavaScript) */
-        
-        /* Apenas o estilo do botão de compra é mantido */
-        .buy-button {
-            display: inline-block;
-            background-color: #fe2c55;
-            color: white;
-            padding: 10px 20px;
-            text-decoration: none;
-            border-radius: 50px;
-            font-weight: bold;
-            font-size: 1em;
-            transition: background-color 0.3s;
-            border: none;
-            cursor: pointer;
-            margin-top: 15px;
-        }
-
-        .buy-button:hover {
-            background-color: #d12749;
-        }
-
-        /* Estilos específicos para carrossel dinâmico */
-        .image-carousel {
-            position: relative;
-            width: 100%;
-            overflow: hidden;
-            border-radius: 8px;
-        }
-
-        .image-container {
+        .main-container {
             display: flex;
-            transition: transform 0.3s ease-in-out;
+            gap: 30px;
+            padding: 20px;
         }
-        
-        .product-image {
-            min-width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .nav-button {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.5);
-            color: white;
-            border: none;
-            padding: 8px;
+        #gameCanvas {
+            background: #252525;
+            border: 4px solid #fe2c55;
+            border-radius: 15px;
             cursor: pointer;
-            z-index: 10;
-            user-select: none;
-            border-radius: 50%;
-            font-size: 1em;
-            display: none; /* Escondido por padrão, mostrado se houver mais de uma foto */
         }
-
-        .nav-button.prev { left: 10px; }
-        .nav-button.next { right: 10px; }
-        
-        .no-products {
-            text-align: center;
-            padding: 50px;
-            font-size: 1.2em;
-            color: #666;
+        .shop {
+            background: #333;
+            padding: 20px;
+            border-radius: 15px;
+            width: 250px;
         }
+        .upgrade-btn {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #fe2c55;
+            border: none;
+            color: white;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .upgrade-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        .stats { font-size: 1.2em; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="productGallery">
+    <div class="header">
+        <h1>Mineradora Digital</h1>
+        <div class="stats">Pontos: <span id="score">0</span></div>
+        <div class="stats">Produção: <span id="pps">0</span>/s</div>
+    </div>
+
+    <div class="main-container">
+        <canvas id="gameCanvas" width="500" height="400"></canvas>
+
+        <div class="shop">
+            <h3>Loja de Upgrades</h3>
+            <button id="buyMiner" class="upgrade-btn">
+                Comprar Mineradora (Custo: 50)
+            </button>
+            <p><small>Gera +1 ponto por segundo</small></p>
+            <hr>
+            <div id="inventory">Mineradoras: 0</div>
         </div>
-    
+    </div>
+
     <script>
-        const STORAGE_KEY = 'tiktokShopProducts';
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+        const ppsDisplay = document.getElementById('pps');
+        const minerBtn = document.getElementById('buyMiner');
+        const invDisplay = document.getElementById('inventory');
 
-        // Objeto para rastrear o índice atual de cada carrossel
-        const carouselStates = {};
+        let score = 0;
+        let miners = 0;
+        let minerCost = 50;
 
-        document.addEventListener('DOMContentLoaded', loadProductsAndRender);
+        // Alvo para clicar manualmente
+        let target = { x: 250, y: 200, radius: 40 };
 
-        function loadProductsAndRender() {
-            const storedData = localStorage.getItem(STORAGE_KEY);
-            let products = [];
-            
-            if (storedData) {
-                try {
-                    products = JSON.parse(storedData);
-                } catch (e) {
-                    console.error("Erro ao carregar lista de produtos:", e);
-                }
+        // 1. Lógica da Máquina de Minerar (Pontos Passivos)
+        setInterval(() => {
+            if (miners > 0) {
+                addScore(miners);
             }
+        }, 1000); // A cada 1 segundo
 
-            const gallery = document.getElementById('productGallery');
-            gallery.innerHTML = ''; // Limpa o conteúdo
-
-            if (products.length === 0) {
-                gallery.innerHTML = '<div class="no-products">Nenhum produto cadastrado. Por favor, acesse o <a href="admin.html">Painel ADM</a> para adicionar.</div>';
-                return;
-            }
-
-            products.forEach((product, index) => {
-                gallery.appendChild(createProductCard(product, index));
-                carouselStates[index] = 0; // Inicializa o estado do carrossel
-            });
-        }
-        
-        // Função que cria o HTML para um único cartão de produto
-        function createProductCard(product, index) {
-            const card = document.createElement('div');
-            card.className = 'product-card';
-            
-            const imagesHTML = product.images.map((url, imgIndex) => 
-                `<img class="product-image" src="${url}" alt="${product.name} - Foto ${imgIndex + 1}">`
-            ).join('');
-
-            const hasMultipleImages = product.images.length > 1;
-
-            card.innerHTML = `
-                <h2 class="product-title">${product.name}</h2>
-                <div class="image-carousel">
-                    <div class="image-container" id="container-${index}">
-                        ${imagesHTML}
-                    </div>
-                    ${hasMultipleImages ? `
-                        <button class="nav-button prev" onclick="navigateCarousel(${index}, -1)">&#10094;</button>
-                        <button class="nav-button next" onclick="navigateCarousel(${index}, 1)">&#10095;</button>
-                    ` : ''}
-                </div>
-                <a 
-                    class="buy-button" 
-                    href="${product.link}" 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    🛒 Comprar no TikTok Shop
-                </a>
-            `;
-            
-            return card;
+        function addScore(amount) {
+            score += amount;
+            updateUI();
         }
 
-        // Lógica do Carrossel (agora específica para cada cartão)
-        window.navigateCarousel = function(productIndex, direction) {
-            const container = document.getElementById(`container-${productIndex}`);
-            if (!container) return;
-            
-            const images = container.querySelectorAll('.product-image');
-            let currentIndex = carouselStates[productIndex];
-            
-            if (images.length <= 1) return;
-
-            currentIndex += direction;
-
-            if (currentIndex < 0) {
-                currentIndex = images.length - 1;
-            } else if (currentIndex >= images.length) {
-                currentIndex = 0;
-            }
-
-            // Salva o novo estado
-            carouselStates[productIndex] = currentIndex;
-            
-            // Aplica a transformação
-            const offset = -currentIndex * 100;
-            container.style.transform = `translateX(${offset}%)`;
+        function updateUI() {
+            scoreDisplay.innerText = Math.floor(score);
+            ppsDisplay.innerText = miners;
+            invDisplay.innerText = `Mineradoras: ${miners}`;
+            minerBtn.disabled = score < minerCost;
+            minerBtn.innerText = `Comprar Mineradora (Custo: ${minerCost})`;
         }
+
+        // Compra de Mineradora
+        minerBtn.addEventListener('click', () => {
+            if (score >= minerCost) {
+                score -= minerCost;
+                miners++;
+                minerCost = Math.floor(minerCost * 1.5); // Custo aumenta
+                updateUI();
+            }
+        });
+
+        // Clique manual no Alvo
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const dist = Math.sqrt((x - target.x)**2 + (y - target.y)**2);
+            if (dist < target.radius) {
+                addScore(1);
+                spawnParticle(x, y);
+                moveTarget();
+            }
+        });
+
+        function moveTarget() {
+            target.x = Math.random() * (canvas.width - 80) + 40;
+            target.y = Math.random() * (canvas.height - 80) + 40;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Desenha o Alvo (O "Minério")
+            ctx.beginPath();
+            ctx.arc(target.x, target.y, target.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#fe2c55';
+            ctx.fill();
+            ctx.closePath();
+
+            ctx.fillStyle = "white";
+            ctx.textAlign = "center";
+            ctx.fillText("CLIQUE AQUI", target.x, target.y + 5);
+
+            requestAnimationFrame(draw);
+        }
+
+        function spawnParticle(x, y) {
+            // Efeito visual simples de clique
+            ctx.fillStyle = "gold";
+            ctx.fillText("+1", x, y - 20);
+        }
+
+        draw();
+        updateUI();
     </script>
-
 </body>
 </html>
