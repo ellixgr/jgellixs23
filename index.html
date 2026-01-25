@@ -3,130 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Live Cabo de Guerra</title>
+    <title>Live Empurra-Empurra</title>
     <style>
         * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; }
-        body { margin: 0; background: #111; color: white; font-family: 'Arial Black', sans-serif; overflow: hidden; }
+        body { margin: 0; background: #000; color: white; font-family: 'Arial Black', sans-serif; overflow: hidden; }
 
-        /* Cenário de Cabo de Guerra */
         #game-container {
             position: relative;
             width: 100vw; height: 100vh;
-            background: linear-gradient(#1a1a1a, #333);
-            display: flex; flex-direction: column; align-items: center;
+            display: flex;
+            overflow: hidden;
         }
 
-        #rope {
-            position: absolute; top: 55%; width: 100%; height: 8px;
-            background: #8b4513; box-shadow: 0 4px 10px #000; z-index: 10;
+        /* Lados Coloridos */
+        .side {
+            height: 100%;
+            transition: width 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
         }
 
-        /* Marcador de Força Central */
-        #center-flag {
-            position: absolute; top: -15px; left: 50%;
-            width: 20px; height: 40px; background: red;
-            transform: translateX(-50%); transition: left 0.2s;
+        #girls-side { background-color: #ff3399; width: 50%; }
+        #boys-side { background-color: #007bff; width: 50%; }
+
+        /* Divisor Central (Onde eles se tocam) */
+        #divider {
+            position: absolute;
+            top: 0; bottom: 0;
+            left: 50%;
+            width: 10px;
+            background: white;
+            z-index: 10;
+            transform: translateX(-50%);
+            transition: left 0.3s ease-out;
         }
 
-        /* Personagens */
-        .char {
-            position: absolute; bottom: 35%; width: 40px; height: 60px;
-            font-size: 40px; display: flex; align-items: center; justify-content: center;
-            transition: all 0.5s ease-out;
+        /* Imagens dos Personagens */
+        .pusher {
+            position: absolute;
+            height: 70vh; /* Tamanho grande para a live */
+            bottom: 10%;
+            pointer-events: none;
         }
 
-        /* Controles (Painel do Streamer) */
+        /* Menina empurrando para a direita */
+        #girl-img {
+            right: 0;
+            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+        }
+
+        /* Homem empurrando para a esquerda */
+        #boy-img {
+            left: 0;
+            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+        }
+
+        /* Textos e Placar */
+        .label { position: absolute; top: 50px; font-size: 40px; text-shadow: 2px 2px #000; }
+        .score { position: absolute; bottom: 150px; font-size: 80px; text-shadow: 4px 4px #000; }
+
+        /* Controles */
         .controls {
-            position: fixed; bottom: 30px; width: 100%;
-            display: flex; justify-content: space-around; align-items: center;
-            padding: 0 10px; z-index: 100;
+            position: fixed; bottom: 20px; width: 100%;
+            display: flex; justify-content: space-around; z-index: 100;
         }
 
         .btn {
-            padding: 20px; border-radius: 15px; border: 4px solid #fff;
-            color: white; font-size: 16px; font-weight: bold; cursor: pointer;
-        }
-        .btn-boy { background: #007bff; }
-        .btn-girl { background: #ff3399; }
-        .btn-auto { background: #444; font-size: 12px; }
-        
-        .score-board {
-            position: fixed; top: 20px; display: flex; gap: 50px;
-            font-size: 30px; text-shadow: 2px 2px #000;
+            padding: 25px 40px; border-radius: 15px; border: 4px solid #fff;
+            color: white; font-size: 18px; font-weight: bold; cursor: pointer;
         }
     </style>
 </head>
 <body>
 
     <div id="game-container">
-        <div class="score-board">
-            <div style="color: #007bff;">MENINOS: <span id="b-score">0</span></div>
-            <div style="color: #ff3399;">MENINAS: <span id="g-score">0</span></div>
+        <div id="girls-side" class="side">
+            <div class="label" style="left: 20px;">GIRLS</div>
+            <div id="g-score" class="score" style="left: 40px;">0</div>
+            <img id="girl-img" class="pusher" src="https://i.imgur.com/k6lP0Wn.png" alt="Girl Pushing">
         </div>
 
-        <div id="rope">
-            <div id="center-flag"></div>
+        <div id="divider"></div>
+
+        <div id="boys-side" class="side">
+            <div class="label" style="right: 20px;">BOYS</div>
+            <div id="b-score" class="score" style="right: 40px;">0</div>
+            <img id="boy-img" class="pusher" src="https://i.imgur.com/vHq83Cj.png" alt="Boy Pushing">
         </div>
-        
-        <div id="arena"></div>
     </div>
 
     <div class="controls">
-        <div class="btn btn-boy" onclick="addChar('boy')">+ MENINO</div>
-        <div class="btn btn-auto" id="auto-btn" onclick="toggleAuto()">AUTO: OFF</div>
-        <div class="btn btn-girl" onclick="addChar('girl')">+ MENINA</div>
+        <div class="btn" style="background: #ff3399;" onclick="push('girl')">+ FEM</div>
+        <div class="btn" style="background: #444;" id="auto-btn" onclick="toggleAuto()">AUTO: OFF</div>
+        <div class="btn" style="background: #007bff;" onclick="push('boy')">+ MASC</div>
     </div>
 
     <script>
-        let boys = 0;
-        let girls = 0;
+        let scoreG = 0;
+        let scoreB = 0;
+        let position = 50; // Porcentagem da tela (centro)
         let autoMode = false;
-        let ropePos = 50; // Porcentagem do centro
 
-        function addChar(type) {
-            const arena = document.getElementById('arena');
-            const char = document.createElement('div');
-            char.className = 'char';
-            
-            if (type === 'boy') {
-                boys++;
-                char.innerText = '👦';
-                char.style.left = (Math.random() * 40) + '%'; // Lado esquerdo
-                ropePos -= 0.5;
+        function push(gender) {
+            if (gender === 'girl') {
+                scoreG++;
+                position += 0.5; // Menina empurra para a DIREITA
             } else {
-                girls++;
-                char.innerText = '👧';
-                char.style.left = (Math.random() * 40 + 60) + '%'; // Lado direito
-                ropePos += 0.5;
+                scoreB++;
+                position -= 0.5; // Menino empurra para a ESQUERDA
             }
 
-            document.getElementById('b-score').innerText = boys;
-            document.getElementById('g-score').innerText = girls;
-            
-            // Atualiza a corda
-            document.getElementById('center-flag').style.left = ropePos + '%';
-            
-            arena.appendChild(char);
+            // Limites para não sair da tela
+            if (position > 90) position = 90;
+            if (position < 10) position = 10;
 
-            // Remove o personagem depois de um tempo para não travar o celular
-            setTimeout(() => { char.style.opacity = '0'; }, 3000);
-            setTimeout(() => { char.remove(); }, 4000);
+            updateScreen();
+        }
+
+        function updateScreen() {
+            document.getElementById('g-score').innerText = scoreG;
+            document.getElementById('b-score').innerText = scoreB;
+            
+            // Move o divisor e ajusta o tamanho dos fundos
+            document.getElementById('divider').style.left = position + '%';
+            document.getElementById('girls-side').style.width = position + '%';
+            document.getElementById('boys-side').style.width = (100 - position) + '%';
         }
 
         function toggleAuto() {
             autoMode = !autoMode;
-            document.getElementById('auto-btn').innerText = autoMode ? "AUTO: ON" : "AUTO: OFF";
-            document.getElementById('auto-btn').style.background = autoMode ? "green" : "#444";
+            const btn = document.getElementById('auto-btn');
+            btn.innerText = autoMode ? "AUTO: ON" : "AUTO: OFF";
+            btn.style.background = autoMode ? "green" : "#444";
         }
 
-        // Loop do Modo Automático
+        // Loop Automático
         setInterval(() => {
             if (autoMode) {
-                const rand = Math.random();
-                if (rand > 0.5) addChar('boy');
-                else addChar('girl');
+                const side = Math.random() > 0.5 ? 'girl' : 'boy';
+                push(side);
             }
-        }, 800); // Adiciona um a cada 0.8 segundos no automático
+        }, 500);
     </script>
 </body>
 </html>
