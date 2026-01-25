@@ -3,210 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Crazy Zombie DBZ Mobile</title>
+    <title>Live Cabo de Guerra</title>
     <style>
-        * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; touch-action: none; }
-        body { margin: 0; background: #000; overflow: hidden; font-family: 'Arial Black', sans-serif; }
-        canvas { display: block; background: #333; }
-        
-        .overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(0,0,0,0.8), #000); display: flex; 
-            flex-direction: column; align-items: center; justify-content: center; z-index: 100;
+        * { box-sizing: border-box; -webkit-touch-callout: none; -webkit-user-select: none; }
+        body { margin: 0; background: #111; color: white; font-family: 'Arial Black', sans-serif; overflow: hidden; }
+
+        /* Cenário de Cabo de Guerra */
+        #game-container {
+            position: relative;
+            width: 100vw; height: 100vh;
+            background: linear-gradient(#1a1a1a, #333);
+            display: flex; flex-direction: column; align-items: center;
         }
+
+        #rope {
+            position: absolute; top: 55%; width: 100%; height: 8px;
+            background: #8b4513; box-shadow: 0 4px 10px #000; z-index: 10;
+        }
+
+        /* Marcador de Força Central */
+        #center-flag {
+            position: absolute; top: -15px; left: 50%;
+            width: 20px; height: 40px; background: red;
+            transform: translateX(-50%); transition: left 0.2s;
+        }
+
+        /* Personagens */
+        .char {
+            position: absolute; bottom: 35%; width: 40px; height: 60px;
+            font-size: 40px; display: flex; align-items: center; justify-content: center;
+            transition: all 0.5s ease-out;
+        }
+
+        /* Controles (Painel do Streamer) */
+        .controls {
+            position: fixed; bottom: 30px; width: 100%;
+            display: flex; justify-content: space-around; align-items: center;
+            padding: 0 10px; z-index: 100;
+        }
+
+        .btn {
+            padding: 20px; border-radius: 15px; border: 4px solid #fff;
+            color: white; font-size: 16px; font-weight: bold; cursor: pointer;
+        }
+        .btn-boy { background: #007bff; }
+        .btn-girl { background: #ff3399; }
+        .btn-auto { background: #444; font-size: 12px; }
         
-        .hud { position: fixed; top: 10px; left: 10px; color: white; width: 220px; pointer-events: none; z-index: 50; }
-        .bar-bg { width: 100%; height: 14px; background: #222; border: 2px solid #fff; margin-bottom: 5px; }
-        .bar-f { height: 100%; width: 0%; transition: width 0.1s; }
-        
-        .ctrl { position: fixed; bottom: 30px; width: 100%; display: flex; justify-content: space-between; padding: 0 30px; z-index: 60; }
-        .joy-bg { width: 140px; height: 140px; background: rgba(255,255,255,0.1); border: 3px solid #666; border-radius: 50%; position: relative; pointer-events: auto; }
-        #stk { width: 60px; height: 60px; background: #fff; border-radius: 50%; position: absolute; top: 37px; left: 37px; }
-        
-        .btns { display: flex; gap: 20px; pointer-events: auto; }
-        .b { width: 90px; height: 90px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; font-weight: bold; border: 5px solid rgba(255,255,255,0.4); }
-        .b-atk { background: #f22; box-shadow: 0 0 20px #f00; }
-        .b-ki { background: #08e; box-shadow: 0 0 20px #09f; }
+        .score-board {
+            position: fixed; top: 20px; display: flex; gap: 50px;
+            font-size: 30px; text-shadow: 2px 2px #000;
+        }
     </style>
 </head>
 <body>
 
-    <div id="m" class="overlay">
-        <h1 style="color: #f90; font-size: 45px; margin-bottom: 10px; text-shadow: 4px 4px #000;">CRAZY DBZ</h1>
-        <p style="color: white;">SELECIONE SEU GUERREIRO</p>
-        <button onclick="st('Goku')" style="background:#f60; padding:20px 60px; color:#fff; border:none; border-radius:15px; font-size:25px; margin:10px; border-bottom: 5px solid #930;">GOKU</button>
-        <button onclick="st('Vegeta')" style="background:#04f; padding:20px 60px; color:#fff; border:none; border-radius:15px; font-size:25px; margin:10px; border-bottom: 5px solid #009;">VEGETA</button>
-    </div>
-
-    <div class="hud">
-        HP <div class="bar-bg"><div id="h" class="bar-f" style="background:#f00; width:100%"></div></div>
-        KI <div class="bar-bg"><div id="k" class="bar-f" style="background:#09f; width:0%"></div></div>
-        <div style="font-size: 20px; text-shadow: 2px 2px #000;">SCORE: <span id="s">0</span></div>
-    </div>
-
-    <canvas id="c"></canvas>
-
-    <div class="ctrl">
-        <div class="joy-bg" id="ja"><div id="stk"></div></div>
-        <div class="btns">
-            <div class="b b-atk" id="ba">SOCO</div>
-            <div class="b b-ki" id="bs">KI</div>
+    <div id="game-container">
+        <div class="score-board">
+            <div style="color: #007bff;">MENINOS: <span id="b-score">0</span></div>
+            <div style="color: #ff3399;">MENINAS: <span id="g-score">0</span></div>
         </div>
+
+        <div id="rope">
+            <div id="center-flag"></div>
+        </div>
+        
+        <div id="arena"></div>
+    </div>
+
+    <div class="controls">
+        <div class="btn btn-boy" onclick="addChar('boy')">+ MENINO</div>
+        <div class="btn btn-auto" id="auto-btn" onclick="toggleAuto()">AUTO: OFF</div>
+        <div class="btn btn-girl" onclick="addChar('girl')">+ MENINA</div>
     </div>
 
     <script>
-        const canvas = document.getElementById('c');
-        const ctx = canvas.getContext('2d');
-        let active = false, score = 0;
-        
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        let boys = 0;
+        let girls = 0;
+        let autoMode = false;
+        let ropePos = 50; // Porcentagem do centro
 
-        // Cenário (Área de jogo - Plataforma)
-        const arena = { top: canvas.height * 0.5, bottom: canvas.height * 0.95 };
-
-        const p = { 
-            x: 200, y: arena.top + 100, w: 50, h: 90, 
-            hp: 100, ki: 0, dx: 0, dy: 0, f: 1, 
-            atk: false, sp: false, name: '' 
-        };
-
-        const enemies = [];
-
-        function st(n) { p.name = n; document.getElementById('m').style.display = 'none'; active = true; loop(); }
-
-        // Joystick
-        const ja = document.getElementById('ja');
-        ja.ontouchmove = (e) => {
-            const t = e.touches[0];
-            const r = ja.getBoundingClientRect();
-            let dx = t.clientX - (r.left + 70), dy = t.clientY - (r.top + 70);
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if(dist > 50) { dx *= 50/dist; dy *= 50/dist; }
-            document.getElementById('stk').style.transform = `translate(${dx}px, ${dy}px)`;
-            p.dx = dx/6; p.dy = dy/6;
-            if(dx > 5) p.f = 1; else if(dx < -5) p.f = -1;
-        };
-        ja.ontouchend = () => { p.dx = p.dy = 0; document.getElementById('stk').style.transform = 'translate(0,0)'; };
-
-        // Botões
-        document.getElementById('ba').ontouchstart = (e) => { 
-            e.preventDefault(); 
-            p.atk = true; 
-            checkHit(); 
-            setTimeout(() => p.atk = false, 150); 
-        };
-        document.getElementById('bs').ontouchstart = (e) => { 
-            e.preventDefault(); 
-            if(p.ki >= 100) { p.sp = true; p.ki = 0; setTimeout(() => p.sp = false, 1200); }
-        };
-
-        function checkHit() {
-            enemies.forEach(en => {
-                // Só acerta se estiver na mesma linha de profundidade (eixo Y próximo)
-                const yDist = Math.abs(p.y - en.y);
-                const xDist = p.f === 1 ? (en.x - p.x) : (p.x - en.x);
-                if(yDist < 30 && xDist > 0 && xDist < 90) {
-                    en.hp -= 10;
-                    en.x += p.f * 40; // Knockback real
-                }
-            });
-        }
-
-        function update() {
-            if(!active) return;
+        function addChar(type) {
+            const arena = document.getElementById('arena');
+            const char = document.createElement('div');
+            char.className = 'char';
             
-            p.x = Math.max(30, Math.min(canvas.width - 30, p.x + p.dx));
-            p.y = Math.max(arena.top, Math.min(arena.bottom, p.y + p.dy));
-
-            enemies.forEach((en, i) => {
-                const dx = p.x - en.x, dy = p.y - en.y;
-                const d = Math.sqrt(dx*dx + dy*dy);
-                
-                // Seguir jogador com IA de Beat 'em Up
-                en.x += (dx/d) * en.s;
-                en.y += (dy/d) * (en.s * 0.5); // Move mais devagar no eixo vertical
-
-                // Ataque especial contínuo
-                if(p.sp && Math.abs(p.y - en.y) < 40) {
-                    if((p.f == 1 && en.x > p.x) || (p.f == -1 && en.x < p.x)) {
-                        en.hp -= 2;
-                        en.x += p.f * 5;
-                    }
-                }
-
-                // Dano no Player (Se estiverem na mesma linha)
-                if(d < 35 && Math.abs(dy) < 20) {
-                    p.hp -= 0.3;
-                }
-
-                if(en.hp <= 0) { enemies.splice(i,1); score++; p.ki = Math.min(100, p.ki + 20); }
-            });
-
-            if(Math.random() < 0.02) {
-                enemies.push({ x: Math.random()*canvas.width, y: Math.random() > 0.5 ? arena.top : arena.bottom, hp: 40, s: 1.5 });
+            if (type === 'boy') {
+                boys++;
+                char.innerText = '👦';
+                char.style.left = (Math.random() * 40) + '%'; // Lado esquerdo
+                ropePos -= 0.5;
+            } else {
+                girls++;
+                char.innerText = '👧';
+                char.style.left = (Math.random() * 40 + 60) + '%'; // Lado direito
+                ropePos += 0.5;
             }
 
-            document.getElementById('h').style.width = p.hp + "%";
-            document.getElementById('k').style.width = p.ki + "%";
-            document.getElementById('s').innerText = score;
-            if(p.hp <= 0) location.reload();
-        }
-
-        function draw() {
-            // Fundo e Chão
-            ctx.fillStyle = "#111"; ctx.fillRect(0,0,canvas.width, arena.top);
-            ctx.fillStyle = "#444"; ctx.fillRect(0, arena.top, canvas.width, canvas.height); // Calçada/Plataforma
+            document.getElementById('b-score').innerText = boys;
+            document.getElementById('g-score').innerText = girls;
             
-            // Desenhar Linhas da Plataforma para Profundidade
-            ctx.strokeStyle = "#555";
-            for(let i = arena.top; i < arena.bottom; i += 40) {
-                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
-            }
+            // Atualiza a corda
+            document.getElementById('center-flag').style.left = ropePos + '%';
+            
+            arena.appendChild(char);
 
-            // Ordenar por Y para o que tá atrás ficar atrás (Layering)
-            const objects = [...enemies, p].sort((a,b) => a.y - b.y);
-
-            objects.forEach(obj => {
-                ctx.save();
-                ctx.translate(obj.x, obj.y);
-                
-                if(obj === p) {
-                    // Desenha Sombra
-                    ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.beginPath(); ctx.ellipse(0,0,30,10,0,0,Math.PI*2); ctx.fill();
-                    
-                    if(p.f === -1) ctx.scale(-1, 1);
-                    // Cabelo Goku/Vegeta
-                    ctx.fillStyle = "black"; ctx.beginPath(); ctx.moveTo(-20,-40); ctx.lineTo(-10,-70); ctx.lineTo(10,-70); ctx.lineTo(20,-40); ctx.fill();
-                    // Corpo e Rosto
-                    ctx.fillStyle = p.name == 'Goku' ? '#f60' : '#04f'; ctx.fillRect(-15, -40, 30, 45);
-                    ctx.fillStyle = "#ffdbac"; ctx.fillRect(-12,-65, 24,25);
-                    // Soco visual
-                    if(p.atk) { ctx.fillStyle = "white"; ctx.fillRect(15, -30, 25, 15); }
-                } else {
-                    // Desenha Zumbi
-                    ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.beginPath(); ctx.ellipse(0,0,25,8,0,0,Math.PI*2); ctx.fill();
-                    ctx.fillStyle = "#262"; ctx.fillRect(-15, -40, 30, 45);
-                    ctx.fillStyle = "#131"; ctx.fillRect(-12,-65, 24,25);
-                    // Barra de Vida do Inimigo
-                    ctx.fillStyle = "red"; ctx.fillRect(-20, -80, 40, 5);
-                    ctx.fillStyle = "#0f0"; ctx.fillRect(-20, -80, (obj.hp/40)*40, 5);
-                }
-                ctx.restore();
-            });
-
-            // Kamehameha
-            if(p.sp) {
-                let g = ctx.createLinearGradient(p.x, p.y, p.f==1?canvas.width:0, p.y);
-                g.addColorStop(0,"#fff"); g.addColorStop(0.3, "#09f"); g.addColorStop(1, "transparent");
-                ctx.fillStyle = g;
-                if(p.f==1) ctx.fillRect(p.x+20, p.y-50, canvas.width, 40);
-                else ctx.fillRect(0, p.y-50, p.x-20, 40);
-            }
-
-            update();
-            requestAnimationFrame(draw);
+            // Remove o personagem depois de um tempo para não travar o celular
+            setTimeout(() => { char.style.opacity = '0'; }, 3000);
+            setTimeout(() => { char.remove(); }, 4000);
         }
+
+        function toggleAuto() {
+            autoMode = !autoMode;
+            document.getElementById('auto-btn').innerText = autoMode ? "AUTO: ON" : "AUTO: OFF";
+            document.getElementById('auto-btn').style.background = autoMode ? "green" : "#444";
+        }
+
+        // Loop do Modo Automático
+        setInterval(() => {
+            if (autoMode) {
+                const rand = Math.random();
+                if (rand > 0.5) addChar('boy');
+                else addChar('girl');
+            }
+        }, 800); // Adiciona um a cada 0.8 segundos no automático
     </script>
 </body>
 </html>
