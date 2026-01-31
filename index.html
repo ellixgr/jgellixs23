@@ -571,14 +571,44 @@ footer a{color:#b78cff;text-decoration:none}
   </div>
 </div>
 
-<div id="vip-container" style="width: 100%; max-width: 420px; margin-top: 20px;">
-  <h3 style="font-size: 14px; color: #ffd700; text-transform: uppercase; margin-left: 20px; margin-bottom: 10px; display: flex; align-items: center; gap: 5px;">
-    ⭐ Destaques VIP
-  </h3>
-  <div id="carrossel-vip" style="display: flex; overflow-x: auto; gap: 15px; padding: 10px 20px; scrollbar-width: none;">
+<div id="vipModal" class="modal">
+  <div class="modal-content" id="vip-content-container">
+    <span class="close-modal" id="fecharVipIcon">❌</span>
+    <h3>⭐ Ativar VIP (Pagamento Pix) ⭐</h3>
+    
+    <p style="margin-bottom: 10px;">Grupos VIPs serão mais visíveis e terão mais visitas!</p>
+    
+    <div style="margin: 15px 0;">
+        <img id="qrcode-img" 
+             src="https://files.catbox.moe/kvyq5d.jpg" 
+             alt="QR Code Pix" 
+             style="width: 90%; max-width: 300px; border: 2px solid gold; border-radius: 10px;">
     </div>
-</div>
 
+    <input type="text" id="pix-code-field" 
+           value="00020126580014BR.GOV.BCB.PIX013689a5c070-cdd1-443b-997d-0cbbcf80e2de52040000530398654045.005802BR5918Elias da Conceicao6009SAO PAULO62140510lRM9nLzEht6304AA83" 
+           style="position: absolute; left: -9999px;">
+           
+    <button id="copy-pix-btn" class="pix-copy-btn">
+        📋 Copiar Código Pix
+    </button>
+    
+    <p style="margin-top: 15px; font-size: 14px; color: #555;">
+        Após pagar, envie o comprovante:
+    </p>
+
+    <a href="https://wa.me/5521977231625?text=Ol%C3%A1%2C%20acabei%20de%20fazer%20o%20Pix%20para%20o%20VIP.%20Segue%20o%20comprovante!" 
+       target="_blank" 
+       class="whatsapp-btn">
+       Enviar Comprovante (WhatsApp) 📱
+    </a>
+
+    <button id="fecharVipBtn"
+            style="background:#e74c3c; color:#fff; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; margin-top: 20px;">
+      Fechar
+    </button>
+  </div>
+</div>
 <div id="modalAvisoVip" class="modal">
   <div class="modal-content">
     <span class="close-modal" id="fecharAvisoVip">❌</span>
@@ -595,7 +625,9 @@ footer a{color:#b78cff;text-decoration:none}
     
     <input type="text" id="grupoNome" placeholder=" Nome do grupo" required>
     <input type="text" id="grupoLink" placeholder=" Link do grupo (https://chat.whatsapp.com/...)" required>
+ 
     <input type="text" id="grupoDescricao" placeholder=" Descrição curta (Máx 60 letras)" maxlength="60" required>
+
           
     <select id="grupoCategoria" required>
       <option value=""> Selecione a Categoria</option>
@@ -609,14 +641,16 @@ footer a{color:#b78cff;text-decoration:none}
     <div id="previewContainer">
         <input type="file" id="grupoFotoUpload" accept="image/*">
         <label for="grupoFotoUpload" id="grupoFotoLabel"> Escolha a foto do grupo</label>
+        
         <img id="previewFoto" src="https://files.catbox.moe/9qdwuz.webp" alt="Prévia da foto">
     </div>
     
-    <button id="salvarGrupo">Enviar Grupo</button>
+    <button id="salvarGrupo">
+      Enviar Grupo
+    </button>
     <p id="mensagemEnvio" style="margin-top:10px; color:#2ecc71; font-weight:bold; display:none;">Grupo enviado com sucesso!</p>
   </div>
 </div>
-
 
 
 <script type="module">
