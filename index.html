@@ -574,9 +574,9 @@ footer a{color:#b78cff;text-decoration:none}
 <div id="vipModal" class="modal">
   <div class="modal-content" style="padding: 20px; max-width: 380px; overflow: hidden; position: relative;">
     <span class="close-modal" id="fecharVipIcon" style="z-index: 10; position: absolute; right: 15px; top: 10px;">❌</span>
-    <h3 style="color: #ffd700; margin-bottom: 15px;">⭐ Planos VIP ⭐</h3>
+    <h3 style="color: #ffd700; margin-bottom: 20px;">⭐ Planos VIP ⭐</h3>
 
-    <div id="carrossel-pagamento" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 20px; padding-bottom: 10px; scrollbar-width: none; -webkit-overflow-scrolling: touch;">
+    <div id="carrossel-pagamento" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 20px; padding-bottom: 15px; scrollbar-width: none; -webkit-overflow-scrolling: touch;">
       
       <div style="min-width: 100%; scroll-snap-align: center; display: flex; flex-direction: column; align-items: center;">
         <div style="background: #fff8e1; border: 2px solid #ffd700; padding: 15px; border-radius: 15px; width: 90%;">
@@ -599,15 +599,18 @@ footer a{color:#b78cff;text-decoration:none}
       </div>
     </div>
 
-    <p style="font-size: 10px; color: #888; margin-top: 5px;">⬅️ Arraste para o lado para ver planos ➡️</p>
+    <div style="width: 60px; height: 5px; background: #e0e0e0; border-radius: 10px; margin: 5px auto 20px; position: relative; overflow: hidden;">
+        <div id="indicador-scroll" style="width: 30px; height: 100%; background: #ffd700; position: absolute; left: 0; transition: left 0.2s ease-out; border-radius: 10px;"></div>
+    </div>
 
-    <a href="https://wa.me/5521977231625?text=Olá, fiz o Pix VIP. Segue o comprovante!" target="_blank" class="whatsapp-btn" style="font-size: 13px;">
+    <a href="https://wa.me/5521977231625?text=Olá, fiz o Pix VIP. Segue o comprovante!" target="_blank" class="whatsapp-btn" style="font-size: 13px; margin-top: 0;">
        Enviar Comprovante 📱
     </a>
     
     <button id="fecharVipBtn" style="display:none;">Fechar</button>
   </div>
 </div>
+
 <div id="modalAvisoVip" class="modal">
   <div class="modal-content">
     <span class="close-modal" id="fecharAvisoVip">❌</span>
@@ -1217,6 +1220,21 @@ window.showAlert = function(mensagem) {
   document.getElementById('customAlertMessage').textContent = mensagem;
   document.getElementById('customAlert').style.display = 'flex';
 };
+
+// Faz a barrinha de navegação do VIP deslizar
+const carrosselVip = document.getElementById('carrossel-pagamento');
+const indicadorVip = document.getElementById('indicador-scroll');
+
+if(carrosselVip && indicadorVip) {
+    carrosselVip.addEventListener('scroll', () => {
+        const larguraTotal = carrosselVip.scrollWidth - carrosselVip.clientWidth;
+        const posicaoAtual = carrosselVip.scrollLeft;
+        // Ajusta a posição do indicador amarelo proporcionalmente
+        const deslocamento = (posicaoAtual / larguraTotal) * 30;
+        indicadorVip.style.left = deslocamento + 'px';
+    });
+}
+
 
 carregarGrupos();
 </script>
