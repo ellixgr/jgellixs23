@@ -807,7 +807,6 @@ window.salvarNovoGrupo = async function() {
         return;
     }
 
-    // Mostra pro usuário que está processando
     const btn = document.getElementById('salvarGrupo');
     btn.disabled = true;
     btn.textContent = "PROCESSANDO...";
@@ -817,19 +816,23 @@ window.salvarNovoGrupo = async function() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                nome, link, categoria, descricao, foto, dono, codigoVip
+                nome, 
+                link, 
+                categoria, 
+                descricao, 
+                foto, 
+                dono, 
+                codigoVip: codigoVip // O servidor precisa validar isso lá!
             })
         });
 
         const res = await response.json();
 
         if (res.success) {
-            window.showAlert('✅ Grupo enviado com sucesso!');
+            window.showAlert('✅ Grupo enviado! VIP: ' + (res.isVip ? 'ATIVADO ⭐' : 'NÃO'));
             document.getElementById('modalEnvioGrupo').style.display = 'none';
-            // Limpa o formulário
-            document.getElementById('grupoVipCodigo').value = '';
         } else {
-            window.showAlert('❌ Erro: ' + (res.error || 'Falha ao salvar'));
+            window.showAlert('❌ Erro: ' + res.message);
         }
     } catch (error) {
         window.showAlert('❌ Erro de conexão com o servidor.');
