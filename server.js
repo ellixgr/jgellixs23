@@ -2,10 +2,14 @@ const express = require('express');
 const admin = require('firebase-admin');
 const cors = require('cors');
 const crypto = require('crypto');
+const helmet = require('helmet'); // 🛡️ Segurança extra
 
 const app = express();
 
-// CONFIGURAÇÃO DO CORS - PERFEITA PARA GITHUB PAGES + RENDER
+// 1. APLICAR SEGURANÇA DE CABEÇALHO
+app.use(helmet()); 
+
+// 2. CONFIGURAÇÃO DO CORS
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST'],
@@ -24,60 +28,47 @@ if (!admin.apps.length) {
         });
         console.log("✅ Servidor Autenticado como Admin");
     } catch (e) {
-        console.log("❌ Erro Fatal no JSON da Service Account:", e.message);
+        console.error("❌ Erro na Service Account!");
+        process.exit(1); // Para o servidor se a chave estiver errada
     }
 }
 
 const db = admin.database();
 const SENHA_MESTRE = "cavalo777_";
 
-// --- ROTA DE MOEDAS (BLINDADA) ---
+// --- SISTEMA DE MOEDAS (COM TRAVA DE SEGURANÇA) ---
 app.post('/ganhar-moeda', async (req, res) => {
     const { usuarioID } = req.body;
-
-    if (!usuarioID) return res.json({ success: false, message: "ID ausente" });
+    if (!usuarioID) return res.json({ success: false, message: "ID inválido" });
 
     try {
         const moedasRef = db.ref(`usuarios/${usuarioID}/moedas`);
-        
         const resultado = await moedasRef.transaction((valorAtual) => {
             let total = valorAtual || 0;
-            if (total >= 20) return; // Trava interna: não permite passar de 20
+            if (total >= 20) return; 
             return total + 1;
         });
 
         if (!resultado.committed) {
-            // Retornamos 200 (Sucesso técnico) mas success: false (regra de negócio)
-            // Isso evita que o botão 'Validando' trave por erro de rede
-            return res.json({ 
-                success: false, 
-                message: "Limite diário atingido! Volte amanhã." 
-            });
+            return res.json({ success: false, message: "Limite diário atingido!" });
         }
-
-        return res.json({ 
-            success: true, 
-            novasMoedas: resultado.snapshot.val() 
-        });
-
+        return res.json({ success: true, novasMoedas: resultado.snapshot.val() });
     } catch (error) {
-        console.error("Erro Moeda:", error.message);
-        return res.json({ success: false, message: "Erro temporário, tente de novo." });
+        return res.json({ success: false, message: "Tente novamente." });
     }
 });
 
-// --- ROTA DE CLIQUES (RÁPIDA) ---
+// --- CLIQUES ---
 app.post('/contar-clique', async (req, res) => {
     const { key } = req.body;
-    if (!key) return res.status(400).send("Faltando ID");
-
+    if (!key) return res.status(400).send();
     try {
         await db.ref(`grupos/${key}/cliques`).transaction(c => (c || 0) + 1);
         res.json({ success: true });
-    } catch (e) { res.status(500).send("Erro"); }
+    } catch (e) { res.status(500).send(); }
 });
 
-// --- SISTEMA VIP E GRUPOS ---
+// --- LOGIN E VIP ---
 app.post('/login-abareta', (req, res) => {
     const { senha } = req.body;
     res.json({ autorizado: (senha === SENHA_MESTRE) });
@@ -85,7 +76,7 @@ app.post('/login-abareta', (req, res) => {
 
 app.post('/gerar-vip', async (req, res) => {
     const { senha, duracaoHoras } = req.body;
-    if (senha !== SENHA_MESTRE) return res.status(403).json({ error: "🔒" });
+    if (senha !== SENHA_MESTRE) return res.status(403).json({ error: "Acesso Negado" });
     
     const codigo = crypto.randomBytes(4).toString('hex').toUpperCase();
     try {
@@ -95,7 +86,7 @@ app.post('/gerar-vip', async (req, res) => {
             criadoEm: new Date().toISOString()
         });
         res.json({ codigo });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(500).json({ error: "Erro ao gerar" }); }
 });
 
 app.post('/salvar-grupo', async (req, res) => {
@@ -118,14 +109,15 @@ app.post('/salvar-grupo', async (req, res) => {
             vip: e_vip, vipAte: validade, status: "pendente", criadoEm: Date.now()
         });
         res.json({ success: true, message: "Enviado!" });
-    } catch (e) { res.status(500).json({ error: e.message }); }
+    } catch (e) { res.status(500).json({ error: "Erro ao salvar" }); }
 });
 
-// --- FAXINA AUTOMÁTICA (RODA EM SEGUNDO PLANO) ---
+// --- FAXINA VIP ---
 const limparVips = async () => {
     const agora = Date.now();
     try {
         const snap = await db.ref('grupos').orderByChild('vip').equalTo(true).once('value');
+        if (!snap.exists()) return;
         snap.forEach((child) => {
             const g = child.val();
             if (g.vipAte && agora > g.vipAte) {
@@ -134,10 +126,18 @@ const limparVips = async () => {
         });
     } catch (e) { /* Silencioso */ }
 };
-setInterval(limparVips, 30 * 60 * 1000); // A cada 30 min
+setInterval(limparVips, 30 * 60 * 1000);
 
-// --- INICIALIZAÇÃO ---
+// --- PROTEÇÃO CONTRA CRASHES (CAPTURA TUDO) ---
+process.on('uncaughtException', (err) => {
+    console.error('⚠️ Erro não capturado:', err.message);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('⚠️ Promessa rejeitada não tratada:', reason);
+});
+
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => { 
-    console.log(`🚀 Servidor voando na porta ${PORT}`); 
+    console.log(`🚀 Servidor Blindado na porta ${PORT}`); 
 });
