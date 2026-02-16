@@ -936,41 +936,30 @@ window.excluirGrupo = function(grupo){
 }
 
 async function carregarGrupos() {
-  const gruposRef = ref(db, 'grupos');
-
-  // onValue garante que o site seja um ESPELHO do Firebase
-  onValue(gruposRef, snap => {
-    const listaFirebase = [];
+  try {
+    // Chama o seu servidor Render em vez do Firebase direto
+    const response = await fetch("https://x23wzp.onrender.com/listar-grupos");
+    const grupos = await response.json();
     
-    // Se o banco estiver vazio, limpa a tela
-    if (!snap.exists()) {
-      todosGrupos = [];
-      renderizarGrupos([]);
-      return;
-    }
+    todosGrupos = grupos;
 
-    // Pega APENAS o que existe no Firebase agora
-    snap.forEach(childSnap => {
-        const grupo = childSnap.val();
-        grupo.key = childSnap.key; 
-        grupo.vip = !!grupo.vip;
-        grupo.cliques = grupo.cliques || 0;
-        listaFirebase.push(grupo);
-    });
-    
-    // Sobrescreve a lista global
-    todosGrupos = listaFirebase;
-    // Mantém a categoria selecionada correta
+    // Filtra pela categoria ativa
     const catAtiva = document.querySelector('.cat-btn.active').dataset.cat.toLowerCase();
-    
     let listaFiltrada = todosGrupos;
+    
     if (catAtiva !== 'todos') {
       listaFiltrada = todosGrupos.filter(g => g.categoria?.toLowerCase() === catAtiva);
     }
     
     renderizarGrupos(listaFiltrada);
-  });
+  } catch (error) {
+    console.error("Erro ao carregar grupos via servidor:", error);
+  }
 }
+
+// Para manter o site atualizado, peça os grupos a cada 30 segundos
+setInterval(carregarGrupos, 30000);
+
 
 
 // ================== RENDERIZAR GRUPOS (CORRIGIDO) ================== //
