@@ -3,22 +3,15 @@ const admin = require('firebase-admin');
 const cors = require('cors');
 const crypto = require('crypto');
 const helmet = require('helmet');
-
 const app = express();
-
-// 1. SEGURANÇA E ESTABILIDADE
 app.use(helmet()); 
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type']
 }));
-
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
-
-
-// CONFIGURAÇÃO DO FIREBASE
 if (!admin.apps.length) {
     try {
         const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
@@ -32,13 +25,8 @@ if (!admin.apps.length) {
         process.exit(1);
     }
 }
-
 const db = admin.database();
-
-// 🛡️ SENHA TOTALMENTE ESCONDIDA
 const SENHA_MESTRE = process.env.SENHA_MESTRE;
-
-// --- SISTEMA DE MOEDAS (MANTIDO) ---
 app.post('/ganhar-moeda', async (req, res) => {
     const { usuarioID } = req.body;
     if (!usuarioID) return res.json({ success: false });
@@ -55,8 +43,6 @@ app.post('/ganhar-moeda', async (req, res) => {
         return res.json({ success: false });
     }
 });
-
-// --- CLIQUES (MANTIDO) ---
 app.post('/contar-clique', async (req, res) => {
     const { key } = req.body;
     if (!key) return res.status(400).send();
@@ -65,8 +51,6 @@ app.post('/contar-clique', async (req, res) => {
         res.json({ success: true });
     } catch (e) { res.status(500).send(); }
 });
-
-// --- NOVO: EDITAR GRUPO ---
 app.post('/editar-grupo', async (req, res) => {
     const { key, donoLocal, nome, link, descricao, categoria, foto } = req.body;
     try {
@@ -80,8 +64,6 @@ app.post('/editar-grupo', async (req, res) => {
         res.json({ success: false, message: "Acesso Negado" });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
-// --- NOVO: EXCLUIR GRUPO ---
 app.post('/excluir-grupo', async (req, res) => {
     const { key, donoLocal } = req.body;
     try {
@@ -95,8 +77,6 @@ app.post('/excluir-grupo', async (req, res) => {
         res.json({ success: false });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
-// --- NOVO: IMPULSIONAR GRUPO ---
 app.post('/impulsionar-grupo', async (req, res) => {
     const { key, donoLocal } = req.body;
     try {
@@ -109,14 +89,11 @@ app.post('/impulsionar-grupo', async (req, res) => {
         res.json({ success: false });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
-// --- LOGIN E VIP (MANTIDO) ---
 app.post('/login-abareta', (req, res) => {
     const { senha } = req.body;
     if (!SENHA_MESTRE || senha !== SENHA_MESTRE) return res.json({ autorizado: false });
     res.json({ autorizado: true });
 });
-
 app.post('/gerar-vip', async (req, res) => {
     const { senha, duracaoHoras } = req.body;
     if (!SENHA_MESTRE || senha !== SENHA_MESTRE) return res.status(403).json({ error: "🔒" });
@@ -130,7 +107,6 @@ app.post('/gerar-vip', async (req, res) => {
         res.json({ codigo });
     } catch (e) { res.status(500).json({ error: "Erro" }); }
 });
-
 app.post('/salvar-grupo', async (req, res) => {
     const { nome, link, categoria, descricao, foto, dono, codigoVip } = req.body;
     try {
@@ -144,16 +120,17 @@ app.post('/salvar-grupo', async (req, res) => {
                 await db.ref(`codigos_vips/${codigoVip}`).update({ status: "usado" });
             }
         }
-        // Alterado para salvar direto em 'grupos' para o seu sistema de 'Meus Grupos' ler
         await db.ref('grupos').push().set({
             nome, link, categoria, descricao, foto, dono,
-            vip: e_vip, vipAte: validade, status: "aprovado", criadoEm: Date.now(), cliques: 0
+            vip: e_vip, 
+            vipExpiraEm: validade,
+            status: "aprovado", 
+            criadoEm: Date.now(), 
+            cliques: 0
         });
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: "Erro" }); }
 });
-
-// --- FAXINA VIP (MANTIDO) ---
 const limparVips = async () => {
     const agora = Date.now();
     try {
@@ -161,23 +138,18 @@ const limparVips = async () => {
         if (!snap.exists()) return;
         snap.forEach((child) => {
             const g = child.val();
-            if (g.vipAte && agora > g.vipAte) {
-                db.ref(`grupos/${child.key}`).update({ vip: false, vipAte: null });
+            if (g.vipExpiraEm && agora > g.vipExpiraEm) {
+                db.ref(`grupos/${child.key}`).update({ vip: false, vipExpiraEm: null });
             }
         });
     } catch (e) { }
 };
 setInterval(limparVips, 30 * 60 * 1000);
-
-// --- PROTEÇÃO CONTRA CRASHES (MANTIDO) ---
 process.on('uncaughtException', (err) => console.error('⚠️ Erro:', err.message));
 process.on('unhandledRejection', (reason) => console.error('⚠️ Rejeição:', reason));
-
 const PORT = process.env.PORT || 10000;
 const server = app.listen(PORT, '0.0.0.0', () => { 
     console.log(`🚀 Servidor Blindado na porta ${PORT}`); 
 });
-
-// --- CONEXÃO FLUIDA (TIMEOUTS MANTIDOS) ---
 server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
