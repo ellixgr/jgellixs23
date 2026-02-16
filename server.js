@@ -14,7 +14,9 @@ app.use(cors({
     allowedHeaders: ['Content-Type']
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
 
 // CONFIGURAÇÃO DO FIREBASE
 if (!admin.apps.length) {
@@ -34,10 +36,9 @@ if (!admin.apps.length) {
 const db = admin.database();
 
 // 🛡️ SENHA TOTALMENTE ESCONDIDA
-// Agora ela SÓ existe no painel do Render. Se não configurares lá, ninguém entra.
 const SENHA_MESTRE = process.env.SENHA_MESTRE;
 
-// --- SISTEMA DE MOEDAS ---
+// --- SISTEMA DE MOEDAS (MANTIDO) ---
 app.post('/ganhar-moeda', async (req, res) => {
     const { usuarioID } = req.body;
     if (!usuarioID) return res.json({ success: false });
@@ -55,7 +56,7 @@ app.post('/ganhar-moeda', async (req, res) => {
     }
 });
 
-// --- CLIQUES ---
+// --- CLIQUES (MANTIDO) ---
 app.post('/contar-clique', async (req, res) => {
     const { key } = req.body;
     if (!key) return res.status(400).send();
@@ -65,20 +66,60 @@ app.post('/contar-clique', async (req, res) => {
     } catch (e) { res.status(500).send(); }
 });
 
-// --- LOGIN E VIP ---
+// --- NOVO: EDITAR GRUPO ---
+app.post('/editar-grupo', async (req, res) => {
+    const { key, donoLocal, nome, link, descricao, categoria, foto } = req.body;
+    try {
+        const refGrupo = db.ref(`grupos/${key}`);
+        const snapshot = await refGrupo.once('value');
+        const dados = snapshot.val();
+        if (dados && dados.dono === donoLocal) {
+            await refGrupo.update({ nome, link, descricao, categoria, foto });
+            return res.json({ success: true });
+        }
+        res.json({ success: false, message: "Acesso Negado" });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// --- NOVO: EXCLUIR GRUPO ---
+app.post('/excluir-grupo', async (req, res) => {
+    const { key, donoLocal } = req.body;
+    try {
+        const refGrupo = db.ref(`grupos/${key}`);
+        const snapshot = await refGrupo.once('value');
+        const dados = snapshot.val();
+        if (dados && dados.dono === donoLocal) {
+            await refGrupo.remove();
+            return res.json({ success: true });
+        }
+        res.json({ success: false });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// --- NOVO: IMPULSIONAR GRUPO ---
+app.post('/impulsionar-grupo', async (req, res) => {
+    const { key, donoLocal } = req.body;
+    try {
+        const refGrupo = db.ref(`grupos/${key}`);
+        const snapshot = await refGrupo.once('value');
+        if (snapshot.val().dono === donoLocal) {
+            await refGrupo.update({ ultimoImpulso: Date.now() });
+            return res.json({ success: true });
+        }
+        res.json({ success: false });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// --- LOGIN E VIP (MANTIDO) ---
 app.post('/login-abareta', (req, res) => {
     const { senha } = req.body;
-    // Se a senha do Render não estiver configurada ou estiver errada, nega.
-    if (!SENHA_MESTRE || senha !== SENHA_MESTRE) {
-        return res.json({ autorizado: false });
-    }
+    if (!SENHA_MESTRE || senha !== SENHA_MESTRE) return res.json({ autorizado: false });
     res.json({ autorizado: true });
 });
 
 app.post('/gerar-vip', async (req, res) => {
     const { senha, duracaoHoras } = req.body;
     if (!SENHA_MESTRE || senha !== SENHA_MESTRE) return res.status(403).json({ error: "🔒" });
-    
     const codigo = crypto.randomBytes(4).toString('hex').toUpperCase();
     try {
         await db.ref(`codigos_vips/${codigo}`).set({
@@ -103,15 +144,16 @@ app.post('/salvar-grupo', async (req, res) => {
                 await db.ref(`codigos_vips/${codigoVip}`).update({ status: "usado" });
             }
         }
-        await db.ref('solicitacoes').push().set({
-            nome, link, categoria, descricao, foto, dono, codigoVip,
-            vip: e_vip, vipAte: validade, status: "pendente", criadoEm: Date.now()
+        // Alterado para salvar direto em 'grupos' para o seu sistema de 'Meus Grupos' ler
+        await db.ref('grupos').push().set({
+            nome, link, categoria, descricao, foto, dono,
+            vip: e_vip, vipAte: validade, status: "aprovado", criadoEm: Date.now(), cliques: 0
         });
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: "Erro" }); }
 });
 
-// --- FAXINA VIP ---
+// --- FAXINA VIP (MANTIDO) ---
 const limparVips = async () => {
     const agora = Date.now();
     try {
@@ -127,7 +169,7 @@ const limparVips = async () => {
 };
 setInterval(limparVips, 30 * 60 * 1000);
 
-// --- PROTEÇÃO CONTRA CRASHES ---
+// --- PROTEÇÃO CONTRA CRASHES (MANTIDO) ---
 process.on('uncaughtException', (err) => console.error('⚠️ Erro:', err.message));
 process.on('unhandledRejection', (reason) => console.error('⚠️ Rejeição:', reason));
 
@@ -136,5 +178,6 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Servidor Blindado na porta ${PORT}`); 
 });
 
+// --- CONEXÃO FLUIDA (TIMEOUTS MANTIDOS) ---
 server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
