@@ -995,7 +995,9 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
   const listaOrdenada = ordenarGrupos([...lista]);
 
   listaOrdenada.forEach((g, index) => {
-    const isOwner = g.dono === usuario;
+    const meuID = localStorage.getItem('usuarioID');
+const isOwner = (g.dono === meuID || g.uid === meuID || g.usuarioID === meuID);
+
     
     // CORREÇÃO AQUI: Se o campo vip for true no banco, ele É VIP. Ponto final.
     const vipAtivo = (g.vip === true || g.vip === "true");
@@ -1237,20 +1239,25 @@ function renderAnuncioPopular(container) {
     ad2.innerHTML = `<a href="https://soupopular.net/ref/bagau" target="_blank" style="display: block; border-radius: 15px; overflow: hidden;"><img src="https://files.catbox.moe/k4dtyg.jpg" style="width: 100%; display: block;"></a>`;
     container.appendChild(ad2);
 }
-
-// AJUSTE NO BOTÃO "MEUS GRUPOS" DO MENU
 meusBtn.onclick = (e) => {
   e.preventDefault();
-  const usuario = localStorage.getItem('usuarioID');
-  const meus = todosGrupos.filter(g => g.dono === usuario);
+  const meuID = localStorage.getItem('usuarioID');
+  
+  // Filtro Blindado: verifica se o ID está em 'dono', 'uid' ou 'usuarioID'
+  const meus = todosGrupos.filter(g => {
+      const idNoBanco = g.dono || g.uid || g.usuarioID;
+      return idNoBanco === meuID;
+  });
+
   if (meus.length === 0) {
-      showAlert('Você ainda não enviou nenhum grupo.');
+      window.showAlert('Você ainda não enviou nenhum grupo ou o ID não coincide.');
   } else {
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    renderizarGrupos(meus, true); // O 'true' ativa o modo Impulsionar
+    renderizarGrupos(meus, true); 
     menu.classList.remove('open');
   }
 };
+
 
 window.copiarPixManual = async function(codigo, botao) {
     try {
