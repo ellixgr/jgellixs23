@@ -179,9 +179,17 @@ app.post('/gerar-vip', async (req, res) => {
 app.post('/salvar-grupo', async (req, res) => {
     const { nome, link, categoria, descricao, foto, dono, codigoVip } = req.body;
     try {
-        let e_vip = false;
-        let validade = 0; 
+        // 1. Trava de Link Repetido (Checa no site e nas pendências)
+        const gruposSnap = await db.ref('grupos').orderByChild('link').equalTo(link).once('value');
+        const solicitacoesSnap = await db.ref('solicitacoes').orderByChild('link').equalTo(link).once('value');
+        
+        if (gruposSnap.exists() || solicitacoesSnap.exists()) {
+            return res.json({ success: false, message: "Este link já existe ou aguarda aprovação!" });
+        }
 
+        // 2. Lógica do VIP (Se houver código)
+        let e_vip = false;
+        let validade = 0;
         if (codigoVip) {
             const vipSnap = await db.ref(`codigos_vips/${codigoVip}`).once('value');
             if (vipSnap.exists() && vipSnap.val().status === "disponivel") {
@@ -191,28 +199,23 @@ app.post('/salvar-grupo', async (req, res) => {
             }
         }
 
-        const novoRef = db.ref('grupos').push();
+        // 3. ENVIA PARA SOLICITAÇÕES (Onde o ADM aprova)
+        const novoRef = db.ref('solicitacoes').push();
         await novoRef.set({
-            nome, 
-            link, 
-            categoria, 
-            descricao, 
-            foto, 
-            dono: dono,
-            usuarioID: dono, // Salva redundante para garantir exibição
-            uid: dono,       // Salva redundante para garantir exibição
+            nome, link, categoria, descricao, foto, 
+            dono, usuarioID: dono, uid: dono,
             vip: e_vip, 
             vipExpiraEm: validade,
-            status: "aprovado", 
-            criadoEm: Date.now(), 
-            cliques: 0
+            status: "pendente", 
+            criadoEm: Date.now()
         });
-        res.json({ success: true, isVip: e_vip }); 
-    } catch (e) { 
-        console.error(e);
-        res.status(500).json({ error: "Erro ao salvar" }); 
+
+        res.json({ success: true, message: "Grupo enviado para análise do ADM!" });
+    } catch (e) {
+        res.status(500).json({ error: "Erro ao processar" });
     }
 });
+
 
 const limparVips = async () => {
     const agora = Date.now();
