@@ -2,14 +2,12 @@ const express = require('express');
 const admin = require('firebase-admin');
 const cors = require('cors');
 const crypto = require('crypto');
-const helmet = require('helmet'); // 🛡️ Segurança extra
+const helmet = require('helmet');
 
 const app = express();
 
-// 1. APLICAR SEGURANÇA DE CABEÇALHO
+// 1. SEGURANÇA E ESTABILIDADE
 app.use(helmet()); 
-
-// 2. CONFIGURAÇÃO DO CORS
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST'],
@@ -18,7 +16,7 @@ app.use(cors({
 
 app.use(express.json());
 
-// CONFIGURAÇÃO DO FIREBASE (ADMIN SDK)
+// CONFIGURAÇÃO DO FIREBASE
 if (!admin.apps.length) {
     try {
         const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
@@ -26,21 +24,23 @@ if (!admin.apps.length) {
             credential: admin.credential.cert(serviceAccount),
             databaseURL: "https://cliques-4a2c1-default-rtdb.firebaseio.com"
         });
-        console.log("✅ Servidor Autenticado como Admin");
+        console.log("✅ Servidor Autenticado");
     } catch (e) {
-        console.error("❌ Erro na Service Account!");
-        process.exit(1); // Para o servidor se a chave estiver errada
+        console.error("❌ Erro na Service Account");
+        process.exit(1);
     }
 }
 
 const db = admin.database();
-const SENHA_MESTRE = "cavalo777_";
 
-// --- SISTEMA DE MOEDAS (COM TRAVA DE SEGURANÇA) ---
+// 🛡️ SENHA TOTALMENTE ESCONDIDA
+// Agora ela SÓ existe no painel do Render. Se não configurares lá, ninguém entra.
+const SENHA_MESTRE = process.env.SENHA_MESTRE;
+
+// --- SISTEMA DE MOEDAS ---
 app.post('/ganhar-moeda', async (req, res) => {
     const { usuarioID } = req.body;
-    if (!usuarioID) return res.json({ success: false, message: "ID inválido" });
-
+    if (!usuarioID) return res.json({ success: false });
     try {
         const moedasRef = db.ref(`usuarios/${usuarioID}/moedas`);
         const resultado = await moedasRef.transaction((valorAtual) => {
@@ -48,13 +48,10 @@ app.post('/ganhar-moeda', async (req, res) => {
             if (total >= 20) return; 
             return total + 1;
         });
-
-        if (!resultado.committed) {
-            return res.json({ success: false, message: "Limite diário atingido!" });
-        }
+        if (!resultado.committed) return res.json({ success: false });
         return res.json({ success: true, novasMoedas: resultado.snapshot.val() });
     } catch (error) {
-        return res.json({ success: false, message: "Tente novamente." });
+        return res.json({ success: false });
     }
 });
 
@@ -71,12 +68,16 @@ app.post('/contar-clique', async (req, res) => {
 // --- LOGIN E VIP ---
 app.post('/login-abareta', (req, res) => {
     const { senha } = req.body;
-    res.json({ autorizado: (senha === SENHA_MESTRE) });
+    // Se a senha do Render não estiver configurada ou estiver errada, nega.
+    if (!SENHA_MESTRE || senha !== SENHA_MESTRE) {
+        return res.json({ autorizado: false });
+    }
+    res.json({ autorizado: true });
 });
 
 app.post('/gerar-vip', async (req, res) => {
     const { senha, duracaoHoras } = req.body;
-    if (senha !== SENHA_MESTRE) return res.status(403).json({ error: "Acesso Negado" });
+    if (!SENHA_MESTRE || senha !== SENHA_MESTRE) return res.status(403).json({ error: "🔒" });
     
     const codigo = crypto.randomBytes(4).toString('hex').toUpperCase();
     try {
@@ -86,7 +87,7 @@ app.post('/gerar-vip', async (req, res) => {
             criadoEm: new Date().toISOString()
         });
         res.json({ codigo });
-    } catch (e) { res.status(500).json({ error: "Erro ao gerar" }); }
+    } catch (e) { res.status(500).json({ error: "Erro" }); }
 });
 
 app.post('/salvar-grupo', async (req, res) => {
@@ -94,7 +95,6 @@ app.post('/salvar-grupo', async (req, res) => {
     try {
         let e_vip = false;
         let validade = null;
-        
         if (codigoVip) {
             const vipSnap = await db.ref(`codigos_vips/${codigoVip}`).once('value');
             if (vipSnap.exists() && vipSnap.val().status === "disponivel") {
@@ -103,13 +103,12 @@ app.post('/salvar-grupo', async (req, res) => {
                 await db.ref(`codigos_vips/${codigoVip}`).update({ status: "usado" });
             }
         }
-
         await db.ref('solicitacoes').push().set({
             nome, link, categoria, descricao, foto, dono, codigoVip,
             vip: e_vip, vipAte: validade, status: "pendente", criadoEm: Date.now()
         });
-        res.json({ success: true, message: "Enviado!" });
-    } catch (e) { res.status(500).json({ error: "Erro ao salvar" }); }
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: "Erro" }); }
 });
 
 // --- FAXINA VIP ---
@@ -124,20 +123,18 @@ const limparVips = async () => {
                 db.ref(`grupos/${child.key}`).update({ vip: false, vipAte: null });
             }
         });
-    } catch (e) { /* Silencioso */ }
+    } catch (e) { }
 };
 setInterval(limparVips, 30 * 60 * 1000);
 
-// --- PROTEÇÃO CONTRA CRASHES (CAPTURA TUDO) ---
-process.on('uncaughtException', (err) => {
-    console.error('⚠️ Erro não capturado:', err.message);
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-    console.error('⚠️ Promessa rejeitada não tratada:', reason);
-});
+// --- PROTEÇÃO CONTRA CRASHES ---
+process.on('uncaughtException', (err) => console.error('⚠️ Erro:', err.message));
+process.on('unhandledRejection', (reason) => console.error('⚠️ Rejeição:', reason));
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, '0.0.0.0', () => { 
+const server = app.listen(PORT, '0.0.0.0', () => { 
     console.log(`🚀 Servidor Blindado na porta ${PORT}`); 
 });
+
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 66000;
