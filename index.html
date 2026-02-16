@@ -1250,26 +1250,24 @@ meusBtn.onclick = (e) => {
       return;
   }
 
-  const meus = todosGrupos.filter(g => {
-      // Forçamos tudo para String para evitar erro de tipo (undefined vs string)
+  // Filtra os grupos que já estão no site (aprovados)
+  const meusAprovados = todosGrupos.filter(g => {
       const dono = String(g.dono || "");
       const uid = String(g.uid || "");
       const user = String(g.usuarioID || "");
-      
       return (dono === meuID || uid === meuID || user === meuID) && meuID !== "";
   });
 
-  if (meus.length === 0) {
-      window.showAlert('Nenhum grupo encontrado. Se você trocou de celular ou limpou o histórico, seu ID mudou.');
+  if (meusAprovados.length === 0) {
+      // MUDANÇA AQUI: Mensagem mais clara para o usuário não achar que deu erro
+      window.showAlert('Ainda não há grupos aprovados aqui. Se você enviou agora, aguarde a aprovação do ADM!');
   } else {
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    renderizarGrupos(meus, true); 
+    renderizarGrupos(meusAprovados, true); 
     if(menu) menu.classList.remove('open');
     window.scrollTo({top: 0, behavior: 'smooth'});
   }
 };
-
-
 
 window.copiarPixManual = async function(codigo, botao) {
     try {
