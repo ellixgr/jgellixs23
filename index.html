@@ -993,7 +993,8 @@ const isOwner = (String(g.dono || "") === String(meuID) || String(g.uid || "") =
 
 // Validação Real do VIP: checa se o campo é true E se o tempo não acabou
 const expiraEm = Number(g.vipExpiraEm) || 0;
-const vipAtivo = (g.vip === true || g.vip === "true") && (expiraEm === 0 || expiraEm > agora);
+// Se expiraEm for 0, significa que é um VIP eterno ou bugado, então checamos apenas o campo vip
+const vipAtivo = (g.vip == true || g.vip == "true") && (expiraEm > agora || (g.vip == true && expiraEm === 0));
 
     const wrapper = document.createElement('div');
     wrapper.style.cssText = "display:flex; flex-direction:column; align-items:center; width:100%;";
@@ -1026,7 +1027,7 @@ card.className = 'grupo' + (vipAtivo ? ' vip' : '');
     if (modoMeusGrupos && isOwner) {
         const agora = Date.now();
         const expira = g.vipExpiraEm || 0; // Isso aqui define a variável que estava faltando!
-        const vipAtivo = (g.vip === true || g.vip === "true") && (expira > agora);
+        const vipAtivo = (g.vip == true || g.vip == "true") && (expira > agora);
         
         if (expira > agora) {
             const btnVipStatus = document.createElement('div');
@@ -1237,8 +1238,9 @@ meusBtn.onclick = (e) => {
   
   // Filtra comparando EXATAMENTE com o campo 'dono' do seu banco
   const meusAprovados = todosGrupos.filter(g => {
-      return String(g.dono).trim() === String(meuID).trim();
-  });
+    return String(g.dono || g.uid || g.usuarioID).trim() === String(meuID).trim();
+});
+
 
   if (meusAprovados.length === 0) {
       window.showAlert('Nenhum grupo encontrado para o seu ID. Verifique se o ADM já aprovou!');
