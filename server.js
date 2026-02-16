@@ -83,15 +83,16 @@ app.post('/admin/decidir', async (req, res) => {
             const snap = await refSol.once('value');
             const dados = snap.val();
             if(dados) {
-                // Aqui garantimos que se era VIP na solicitação, continua VIP no grupo oficial
-                await db.ref(`grupos/${id}`).set({ 
-                    ...dados, 
-                    status: 'aprovado', 
-                    cliques: 0,
-                    vip: dados.vip || false, // GARANTE O VIP
-                    vipExpiraEm: dados.vipExpiraEm || 0, // GARANTE O TEMPO
-                    criadoEm: Date.now() 
-                });
+// Forçamos o sistema a entender que vip é um booleano (true/false) real
+await db.ref(`grupos/${id}`).set({ 
+    ...dados, 
+    status: 'aprovado', 
+    cliques: 0,
+    vip: (dados.vip === true || dados.vip === "true"), 
+    vipExpiraEm: Number(dados.vipExpiraEm) || 0, 
+    criadoEm: Date.now() 
+});
+
             }
         }
         await refSol.remove();
