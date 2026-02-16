@@ -821,8 +821,10 @@ window.salvarNovoGrupo = async function() {
                 categoria, 
                 descricao, 
                 foto, 
-                dono, 
-                codigoVip: codigoVip // O servidor precisa validar isso lá!
+                dono: localStorage.getItem('usuarioID'),
+                usuarioID: localStorage.getItem('usuarioID'),
+                uid: localStorage.getItem('usuarioID'),
+                codigoVip: codigoVip
             })
         });
 
@@ -1243,18 +1245,20 @@ meusBtn.onclick = (e) => {
   e.preventDefault();
   const meuID = localStorage.getItem('usuarioID');
   
-  // Filtro Blindado: verifica se o ID está em 'dono', 'uid' ou 'usuarioID'
-  const meus = todosGrupos.filter(g => {
-      const idNoBanco = g.dono || g.uid || g.usuarioID;
-      return idNoBanco === meuID;
-  });
+  // Aqui a gente garante que ele vai achar mesmo que o campo tenha nomes diferentes
+  const meus = todosGrupos.filter(g => 
+      String(g.dono) === String(meuID) || 
+      String(g.uid) === String(meuID) || 
+      String(g.usuarioID) === String(meuID)
+  );
 
   if (meus.length === 0) {
-      window.showAlert('Você ainda não enviou nenhum grupo ou o ID não coincide.');
+      window.showAlert('Nada encontrado! Se você trocou de celular ou limpou o histórico, o site te deu um novo ID e não vai achar os grupos antigos.');
   } else {
     document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
     renderizarGrupos(meus, true); 
-    menu.classList.remove('open');
+    if(menu) menu.classList.remove('open');
+    window.scrollTo({top: 0, behavior: 'smooth'});
   }
 };
 
