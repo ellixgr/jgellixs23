@@ -130,7 +130,6 @@
 
     let idSendoEditado = null;
 
-    // Login/Logout
     window.logar = async () => {
         const e = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
@@ -167,7 +166,10 @@
             const agora = Date.now();
             let vipsAtivos = 0;
             
-            Object.values(grupos).forEach(g => { if(g.vip && g.vipAte > agora) vipsAtivos++; });
+            Object.values(grupos).forEach(g => { 
+                const expira = g.vipExpiraEm || g.vipAte || 0;
+                if(g.vip && expira > agora) vipsAtivos++; 
+            });
             
             document.getElementById('count-visitas').innerText = data.visitas || 0;
             document.getElementById('count-vip').innerText = vipsAtivos;
@@ -175,7 +177,7 @@
             document.getElementById('count-users').innerText = Object.keys(usuarios).length;
 
             renderSolicitacoes(data.solicitacoes);
-            renderGrupos(grupos, usuarios); // Passa usuários para renderizar moedas no grupo
+            renderGrupos(grupos, usuarios);
             renderCodigos(data.codigos_vips);
             renderVideosShopee(data.videos_shopee);
         });
@@ -231,12 +233,13 @@
 
         for (let key in grupos) {
             const g = grupos[key];
-            const isVip = g.vip && g.vipAte > agora;
+            const tempoVip = g.vipExpiraEm || g.vipAte || 0;
+            const isVip = g.vip && tempoVip > agora;
+
             const idVip = `v-${key}`;
             const idImp = `i-${key}`;
-            
-            // Busca moedas do dono do grupo
-            const userMoedas = (usuarios[g.uid] && usuarios[g.uid].moedas) ? usuarios[g.uid].moedas : 0;
+            const idDoDono = g.dono || g.uid || "---"; 
+            const userMoedas = (usuarios[idDoDono] && usuarios[idDoDono].moedas) ? usuarios[idDoDono].moedas : 0;
 
             container.innerHTML += `
                 <div class="item-gestao ${isVip ? 'is-vip' : ''}">
@@ -252,7 +255,7 @@
                     </div>
                     
                     <div class="user-info-box">
-                        <i class="fa fa-user"></i> ID: <b>${g.uid || 'Desconhecido'}</b> | 
+                        <i class="fa fa-user"></i> ID: <b>${idDoDono}</b> | 
                         <i class="fa fa-coins" style="color:#2ecc71"></i> <b>${userMoedas}</b> moedas
                     </div>
 
@@ -265,7 +268,7 @@
             setInterval(() => {
                 const agoraLoop = Date.now();
                 const elV = document.getElementById(idVip);
-                if(elV && g.vipAte) elV.innerText = "VIP: " + fmtTempo(g.vipAte - agoraLoop);
+                if(elV && tempoVip > 0) elV.innerText = "VIP: " + fmtTempo(tempoVip - agoraLoop);
                 
                 const elI = document.getElementById(idImp);
                 if(elI) {
@@ -290,12 +293,25 @@
             if(!cods[c].usado) {
                 container.innerHTML += `
                     <div style="font-size:11px; display:flex; justify-content:space-between; margin-bottom:5px">
-                        <span>${c} (${cods[c].horas}h)</span>
+                        <span>${c} (${cods[c].validadeHoras || cods[c].horas}h)</span>
                         <i class="fa fa-trash" style="color:red; cursor:pointer" onclick="apagarCod('${c}')"></i>
                     </div>`;
             }
         }
     }
+
+    window.adicionarMoedasManual = async () => {
+        const id = document.getElementById('moeda-user-id').value.trim();
+        const qtd = parseInt(document.getElementById('moeda-qtd').value);
+        if(!id || isNaN(qtd)) return alert("Preencha ID e valor!");
+        try {
+            const userRef = ref(db, `usuarios/${id}/moedas`);
+            const snap = await get(userRef);
+            let atual = snap.exists() ? (snap.val() || 0) : 0;
+            await set(userRef, atual + qtd);
+            alert("Moedas atualizadas!");
+        } catch(e) { alert("Erro ao atualizar moedas."); }
+    };
 
     window.decidir = async (id, aprovar) => {
         const sRef = ref(db, `solicitacoes/${id}`);
@@ -306,20 +322,10 @@
         await remove(sRef);
     };
 
-    window.adicionarMoedasManual = async () => {
-        const id = document.getElementById('moeda-user-id').value.trim();
-        const qtd = parseInt(document.getElementById('moeda-qtd').value);
-        if(!id || isNaN(qtd)) return alert("Preencha ID e valor!");
-        const snap = await get(ref(db, `usuarios/${id}`));
-        let atual = snap.exists() ? (snap.val().moedas || 0) : 0;
-        await update(ref(db, `usuarios/${id}`), { moedas: atual + qtd });
-        alert("Moedas atualizadas!");
-    };
-
     window.gerarCodigo = async () => {
         const h = parseInt(document.getElementById('tempo-vip').value);
         const cod = "VIP-" + Math.random().toString(36).substring(2, 8).toUpperCase();
-        await set(ref(db, `codigos_vips/${cod}`), { horas: h, usado: false });
+        await set(ref(db, `codigos_vips/${cod}`), { status: "disponivel", validadeHoras: h, usado: false });
         document.getElementById('btn-copiar').innerText = "COPIAR: " + cod;
         document.getElementById('btn-copiar').style.display = "block";
     };
