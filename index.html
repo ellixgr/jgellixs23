@@ -1031,12 +1031,10 @@ const isOwner = (String(g.dono) === String(meuID) || String(g.uid) === String(me
     const btnContainer = card.querySelector('.btn-container-dinamico');
 
     if (modoMeusGrupos && isOwner) {
-        // Pega o tempo agora
         const agora = Date.now();
-const vipAtivo = (g.vip === true || g.vip === "true") && (g.vipExpiraEm && g.vipExpiraEm > agora);
+        const expira = g.vipExpiraEm || 0; // Isso aqui define a variável que estava faltando!
+        const vipAtivo = (g.vip === true || g.vip === "true") && (expira > agora);
         
-        // Se a data de expiração for maior que agora, ou se o VIP foi definido há menos de 30 segundos
-        // (Isso evita o erro de aparecer "expirado" assim que você ativa)
         if (expira > agora) {
             const btnVipStatus = document.createElement('div');
             btnVipStatus.className = "btn-falso-entrar";
@@ -1244,31 +1242,21 @@ meusBtn.onclick = (e) => {
   e.preventDefault();
   const meuID = localStorage.getItem('usuarioID');
   
-  if (!meuID) {
-      window.showAlert('Erro: Identificação não encontrada.');
-      return;
-  }
-
-  // Filtra de forma mais segura convertendo tudo para String
+  // Filtra comparando EXATAMENTE com o campo 'dono' do seu banco
   const meusAprovados = todosGrupos.filter(g => {
-      const idDono = String(g.dono || "");
-      const idUser = String(g.usuarioID || "");
-      const idUid = String(g.uid || "");
-      const idBusca = String(meuID);
-
-      return (idDono === idBusca || idUser === idBusca || idUid === idBusca);
+      return String(g.dono).trim() === String(meuID).trim();
   });
 
   if (meusAprovados.length === 0) {
-      window.showAlert('Você não tem grupos aprovados ainda. Se enviou agora, aguarde o ADM aprovar!');
+      window.showAlert('Nenhum grupo encontrado para o seu ID. Verifique se o ADM já aprovou!');
   } else {
-      // Remove a classe active de todas as categorias para mostrar que é um filtro especial
       document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
       renderizarGrupos(meusAprovados, true); 
       if(menu) menu.classList.remove('open');
       window.scrollTo({top: 0, behavior: 'smooth'});
   }
 };
+
 
 
 window.copiarPixManual = async function(codigo, botao) {
