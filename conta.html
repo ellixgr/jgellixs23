@@ -179,20 +179,33 @@
 
 window.resgatarVip = async function() {
     if (moedasAtuais < 30) return;
-    const novoCodigo = "VIP-" + Math.random().toString(36).substr(2, 6).toUpperCase();
     
-    // Salva o código na pasta 'codigos_vips' para o outro arquivo conseguir ler
-    await set(ref(db, `codigos_vips/${novoCodigo}`), {
-        status: "disponivel",
-        validadeHoras: 5,
-        criadoEm: new Date().toISOString()
-    });
+    const btn = document.getElementById('btn-resgatar');
+    btn.disabled = true;
+    btn.innerText = "GERANDO PELO SERVIDOR...";
 
-    // Zera as moedas
-    await update(ref(db, `usuarios/${usuarioID}`), { moedas: 0 });
-
-    showAlert("💎 VIP GERADO!", `CÓDIGO: ${novoCodigo}\nCopie e use no seu grupo!`);
+    try {
+        const res = await fetch("https://x23wzp.onrender.com/resgatar-vip-server", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ usuarioID: usuarioID })
+        });
+        
+        const data = await res.json();
+        
+        if (data.success) {
+            showAlert("💎 VIP GERADO!", `CÓDIGO: ${data.codigo}\nCopie e use no seu grupo!`);
+        } else {
+            showAlert("❌ Erro", data.message || "Falha no resgate.");
+        }
+    } catch (e) {
+        showAlert("❌ Erro", "Servidor offline.");
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "💎 RESGATAR VIP (30 MOEDAS)";
+    }
 };
+
 
 </script>
 </body>
