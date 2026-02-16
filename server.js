@@ -27,22 +27,50 @@ if (!admin.apps.length) {
 }
 const db = admin.database();
 const SENHA_MESTRE = process.env.SENHA_MESTRE;
+// 1. ROTA PARA GANHAR MOEDA (CORRIGIDA)
 app.post('/ganhar-moeda', async (req, res) => {
     const { usuarioID } = req.body;
-    if (!usuarioID) return res.json({ success: false });
+    if (!usuarioID) return res.status(400).json({ success: false });
+
     try {
         const moedasRef = db.ref(`usuarios/${usuarioID}/moedas`);
-        const resultado = await moedasRef.transaction((valorAtual) => {
-            let total = valorAtual || 0;
-            if (total >= 20) return; 
-            return total + 1;
-        });
-        if (!resultado.committed) return res.json({ success: false });
-        return res.json({ success: true, novasMoedas: resultado.snapshot.val() });
-    } catch (error) {
-        return res.json({ success: false });
+        await moedasRef.transaction((atual) => (atual || 0) + 1);
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false });
     }
 });
+
+// 2. ROTA PARA RESGATAR VIP (O RENDER QUE VAI CRIAR O CÓDIGO AGORA)
+app.post('/resgatar-vip-server', async (req, res) => {
+    const { usuarioID } = req.body;
+    try {
+        const userRef = db.ref(`usuarios/${usuarioID}`);
+        const snap = await userRef.once('value');
+        const moedas = snap.val()?.moedas || 0;
+
+        if (moedas < 30) {
+            return res.json({ success: false, message: "Moedas insuficientes!" });
+        }
+
+        // O Render gera o código (ele tem permissão total)
+        const novoCodigo = "VIP-" + crypto.randomBytes(3).toString('hex').toUpperCase();
+        
+        // Grava o VIP e zera a moeda num comando só
+        await db.ref(`codigos_vips/${novoCodigo}`).set({
+            status: "disponivel",
+            validadeHoras: 5,
+            criadoEm: new Date().toISOString()
+        });
+        await userRef.update({ moedas: 0 });
+
+        res.json({ success: true, codigo: novoCodigo });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+
 app.post('/contar-clique', async (req, res) => {
     const { key } = req.body;
     if (!key) return res.status(400).send();
