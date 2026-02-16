@@ -4,6 +4,7 @@ const cors = require('cors');
 const crypto = require('crypto');
 const helmet = require('helmet');
 const app = express();
+
 app.use(helmet()); 
 app.use(cors({
     origin: '*',
@@ -12,6 +13,7 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
 if (!admin.apps.length) {
     try {
         const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
@@ -25,8 +27,10 @@ if (!admin.apps.length) {
         process.exit(1);
     }
 }
+
 const db = admin.database();
 const SENHA_MESTRE = process.env.SENHA_MESTRE;
+
 app.post('/ganhar-moeda', async (req, res) => {
     const { usuarioID } = req.body;
     if (!usuarioID) return res.status(400).json({ success: false });
@@ -97,7 +101,10 @@ app.post('/editar-grupo', async (req, res) => {
         const snapshot = await refGrupo.once('value');
         const dados = snapshot.val();
 
-        if (dados && dados.dono === donoLocal) {
+        // Correção da checagem de dono (várias chaves)
+        const isOwner = dados && (dados.dono === donoLocal || dados.usuarioID === donoLocal || dados.uid === donoLocal);
+
+        if (isOwner) {
             let updateDados = { nome, link, descricao, categoria, foto };
             if (codigoVip) {
                 const vipSnap = await db.ref(`codigos_vips/${codigoVip}`).once('value');
@@ -115,14 +122,16 @@ app.post('/editar-grupo', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-
 app.post('/excluir-grupo', async (req, res) => {
     const { key, donoLocal } = req.body;
     try {
         const refGrupo = db.ref(`grupos/${key}`);
         const snapshot = await refGrupo.once('value');
         const dados = snapshot.val();
-        if (dados && dados.dono === donoLocal) {
+        
+        const isOwner = dados && (dados.dono === donoLocal || dados.usuarioID === donoLocal || dados.uid === donoLocal);
+
+        if (isOwner) {
             await refGrupo.remove();
             return res.json({ success: true });
         }
@@ -135,7 +144,11 @@ app.post('/impulsionar-grupo', async (req, res) => {
     try {
         const refGrupo = db.ref(`grupos/${key}`);
         const snapshot = await refGrupo.once('value');
-        if (snapshot.val().dono === donoLocal) {
+        const dados = snapshot.val();
+
+        const isOwner = dados && (dados.dono === donoLocal || dados.usuarioID === donoLocal || dados.uid === donoLocal);
+
+        if (isOwner) {
             await refGrupo.update({ ultimoImpulso: Date.now() });
             return res.json({ success: true });
         }
@@ -167,7 +180,7 @@ app.post('/salvar-grupo', async (req, res) => {
     const { nome, link, categoria, descricao, foto, dono, codigoVip } = req.body;
     try {
         let e_vip = false;
-        let validade = 0; // Inicia com 0 em vez de null para evitar erros no Firebase
+        let validade = 0; 
 
         if (codigoVip) {
             const vipSnap = await db.ref(`codigos_vips/${codigoVip}`).once('value');
@@ -180,7 +193,14 @@ app.post('/salvar-grupo', async (req, res) => {
 
         const novoRef = db.ref('grupos').push();
         await novoRef.set({
-            nome, link, categoria, descricao, foto, dono,
+            nome, 
+            link, 
+            categoria, 
+            descricao, 
+            foto, 
+            dono: dono,
+            usuarioID: dono, // Salva redundante para garantir exibição
+            uid: dono,       // Salva redundante para garantir exibição
             vip: e_vip, 
             vipExpiraEm: validade,
             status: "aprovado", 
@@ -193,7 +213,6 @@ app.post('/salvar-grupo', async (req, res) => {
         res.status(500).json({ error: "Erro ao salvar" }); 
     }
 });
-
 
 const limparVips = async () => {
     const agora = Date.now();
@@ -208,7 +227,9 @@ const limparVips = async () => {
         });
     } catch (e) { }
 };
-setInterval(limparVips, 1 * 60 * 1000); (1 minuto)
+
+// Correção do intervalo (removido comentário de erro)
+setInterval(limparVips, 60000);
 
 process.on('uncaughtException', (err) => console.error('⚠️ Erro Grave:', err.message));
 process.on('unhandledRejection', (reason) => console.error('⚠️ Rejeição Silenciosa:', reason));
