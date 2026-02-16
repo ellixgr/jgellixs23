@@ -27,7 +27,6 @@ if (!admin.apps.length) {
 }
 const db = admin.database();
 const SENHA_MESTRE = process.env.SENHA_MESTRE;
-// 1. ROTA PARA GANHAR MOEDA (CORRIGIDA)
 app.post('/ganhar-moeda', async (req, res) => {
     const { usuarioID } = req.body;
     if (!usuarioID) return res.status(400).json({ success: false });
@@ -41,7 +40,21 @@ app.post('/ganhar-moeda', async (req, res) => {
     }
 });
 
-// 2. ROTA PARA RESGATAR VIP (O RENDER QUE VAI CRIAR O CÓDIGO AGORA)
+app.get('/status-usuario/:usuarioID', async (req, res) => {
+    const { usuarioID } = req.params;
+    try {
+        const snap = await db.ref(`usuarios/${usuarioID}`).once('value');
+        const dados = snap.val();
+        res.json({
+            success: true,
+            moedas: dados?.moedas || 0,
+            id: usuarioID
+        });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
 app.post('/resgatar-vip-server', async (req, res) => {
     const { usuarioID } = req.body;
     try {
@@ -50,13 +63,11 @@ app.post('/resgatar-vip-server', async (req, res) => {
         const moedas = snap.val()?.moedas || 0;
 
         if (moedas < 30) {
-            return res.json({ success: false, message: "Moedas insuficientes!" });
+            return res.json({ success: false, message: "Moedas insuficientes! Você precisa de 30." });
         }
 
-        // O Render gera o código (ele tem permissão total)
         const novoCodigo = "VIP-" + crypto.randomBytes(3).toString('hex').toUpperCase();
         
-        // Grava o VIP e zera a moeda num comando só
         await db.ref(`codigos_vips/${novoCodigo}`).set({
             status: "disponivel",
             validadeHoras: 5,
@@ -70,7 +81,6 @@ app.post('/resgatar-vip-server', async (req, res) => {
     }
 });
 
-
 app.post('/contar-clique', async (req, res) => {
     const { key } = req.body;
     if (!key) return res.status(400).send();
@@ -79,6 +89,7 @@ app.post('/contar-clique', async (req, res) => {
         res.json({ success: true });
     } catch (e) { res.status(500).send(); }
 });
+
 app.post('/editar-grupo', async (req, res) => {
     const { key, donoLocal, nome, link, descricao, categoria, foto } = req.body;
     try {
@@ -92,6 +103,7 @@ app.post('/editar-grupo', async (req, res) => {
         res.json({ success: false, message: "Acesso Negado" });
     } catch (e) { res.status(500).json({ success: false }); }
 });
+
 app.post('/excluir-grupo', async (req, res) => {
     const { key, donoLocal } = req.body;
     try {
@@ -105,6 +117,7 @@ app.post('/excluir-grupo', async (req, res) => {
         res.json({ success: false });
     } catch (e) { res.status(500).json({ success: false }); }
 });
+
 app.post('/impulsionar-grupo', async (req, res) => {
     const { key, donoLocal } = req.body;
     try {
@@ -117,11 +130,13 @@ app.post('/impulsionar-grupo', async (req, res) => {
         res.json({ success: false });
     } catch (e) { res.status(500).json({ success: false }); }
 });
+
 app.post('/login-abareta', (req, res) => {
     const { senha } = req.body;
     if (!SENHA_MESTRE || senha !== SENHA_MESTRE) return res.json({ autorizado: false });
     res.json({ autorizado: true });
 });
+
 app.post('/gerar-vip', async (req, res) => {
     const { senha, duracaoHoras } = req.body;
     if (!SENHA_MESTRE || senha !== SENHA_MESTRE) return res.status(403).json({ error: "🔒" });
@@ -135,6 +150,7 @@ app.post('/gerar-vip', async (req, res) => {
         res.json({ codigo });
     } catch (e) { res.status(500).json({ error: "Erro" }); }
 });
+
 app.post('/salvar-grupo', async (req, res) => {
     const { nome, link, categoria, descricao, foto, dono, codigoVip } = req.body;
     try {
@@ -159,6 +175,7 @@ app.post('/salvar-grupo', async (req, res) => {
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: "Erro" }); }
 });
+
 const limparVips = async () => {
     const agora = Date.now();
     try {
@@ -173,11 +190,14 @@ const limparVips = async () => {
     } catch (e) { }
 };
 setInterval(limparVips, 30 * 60 * 1000);
-process.on('uncaughtException', (err) => console.error('⚠️ Erro:', err.message));
-process.on('unhandledRejection', (reason) => console.error('⚠️ Rejeição:', reason));
+
+process.on('uncaughtException', (err) => console.error('⚠️ Erro Grave:', err.message));
+process.on('unhandledRejection', (reason) => console.error('⚠️ Rejeição Silenciosa:', reason));
+
 const PORT = process.env.PORT || 10000;
 const server = app.listen(PORT, '0.0.0.0', () => { 
     console.log(`🚀 Servidor Blindado na porta ${PORT}`); 
 });
+
 server.keepAliveTimeout = 65000;
 server.headersTimeout = 66000;
