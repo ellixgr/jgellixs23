@@ -1158,34 +1158,46 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
     }
  else {
         // Dentro da função renderizarGrupos, onde cria o btnEntrar:
+// Dentro da função renderizarGrupos, onde você cria o btnEntrar:
 const btnEntrar = document.createElement('div');
 btnEntrar.className = "btn-falso-entrar";
 btnEntrar.innerHTML = "ENTRAR NO GRUPO";
-// COLE ESTE BLOCO NO LUGAR:
+
 btnEntrar.onclick = async (e) => {
     e.preventDefault();
 
+    // Função que faz tudo: conta o clique e dá a moeda no servidor
     const contabilizarEIr = async () => {
         try {
-            // Manda pro Render em vez de tentar escrever direto no Firebase
+            // AQUI ESTÁ O SEGREDO: Manda pro Render em vez de pro Firebase
+            fetch("https://x23wzp.onrender.com/ganhar-moeda", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ usuarioID: usuario }) // 'usuario' já está definido no seu código
+            });
+            
+            // Também conta o clique no grupo para as estatísticas
             fetch("https://x23wzp.onrender.com/contar-clique", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ key: g.key })
             });
-        } catch (err) { console.error(err); }
+        } catch (err) { 
+            console.error("Erro ao falar com o servidor:", err); 
+        }
         
-        // Redireciona independente de o fetch terminar ou não
+        // Redireciona para o WhatsApp
         window.location.href = g.link;
     };
 
     if (vipAtivo) {
         contabilizarEIr();
     } else {
-        // Protetor de link para não-vips
+        // Se não for VIP, tem o protetor de link (Anúncio)
         window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
         btnEntrar.style.pointerEvents = "none";
         btnEntrar.style.background = "#e74c3c";
+        
         let cont = 5;
         const timer = setInterval(() => {
             cont--;
@@ -1200,6 +1212,7 @@ btnEntrar.onclick = async (e) => {
         }, 1000);
     }
 };
+
 
 
         btnContainer.appendChild(btnEntrar);
