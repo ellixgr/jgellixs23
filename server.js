@@ -211,26 +211,38 @@ app.post('/contar-clique', async (req, res) => {
     } catch (e) { res.status(500).send(); }
 });
 
-// ==========================================
-//    ROTAS DE GERENCIAMENTO DO USUÁRIO
-// ==========================================
-
-// Rota para o usuário editar o próprio grupo
 app.post('/editar-grupo', async (req, res) => {
-    const { key, donoLocal, nome, link, descricao, categoria, foto } = req.body;
+    const { key, donoLocal, nome, link, descricao, categoria, foto, codigoVip } = req.body;
     try {
         const refGrupo = db.ref(`grupos/${key}`);
         const snap = await refGrupo.once('value');
         const grupo = snap.val();
 
         // Verifica se o grupo existe e se quem está editando é o dono
-        if (grupo && (grupo.dono === donoLocal || grupo.usuarioID === donoLocal)) {
-            await refGrupo.update({ nome, link, descricao, categoria, foto });
-            return res.json({ success: true });
+        if (snap.exists() && (grupo.dono === donoLocal || grupo.usuarioID === donoLocal)) {
+            let updates = { nome, link, descricao, categoria, foto };
+
+            // NOVA LÓGICA: Se enviou um código, tenta validar
+            if (codigoVip && codigoVip.trim() !== "") {
+                const codLimpo = codigoVip.trim();
+                const vSnap = await db.ref(`codigos_vips/${codLimpo}`).once('value');
+                
+                if (vSnap.exists() && vSnap.val().status === "disponivel") {
+                    const infoVip = vSnap.val();
+                    updates.vip = true;
+                    updates.vipExpiraEm = Date.now() + (Number(infoVip.validadeHoras) * 3600000);
+                    await db.ref(`codigos_vips/${codLimpo}`).update({ status: "usado", usado: true });
+                }
+            }
+            await refGrupo.update(updates);
+            return res.json({ success: true, message: "Atualizado com sucesso!" });
         }
-        res.status(403).json({ success: false, message: "Acesso negado ou grupo inexistente" });
-    } catch (e) { res.status(500).json({ success: false, message: e.message }); }
+        res.status(403).json({ success: false, message: "Acesso negado" });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
 });
+
 
 // Rota para o usuário excluir o próprio grupo
 app.post('/excluir-grupo', async (req, res) => {
