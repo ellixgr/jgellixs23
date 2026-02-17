@@ -860,25 +860,21 @@ window.abrirEdicao = function(g) {
 };
 
 window.executarEdicao = async function(idDoGrupo) {
-    // Pega os valores dos campos do modal de edição
     const nome = document.getElementById('grupoNome').value.trim();
     const link = document.getElementById('grupoLink').value.trim();
     const descricao = document.getElementById('grupoDescricao').value.trim();
     const categoria = document.getElementById('grupoCategoria').value;
     const foto = document.getElementById('previewFoto').src;
-    const codigoVip = document.getElementById('grupoVipCodigo') ? document.getElementById('grupoVipCodigo').value.trim() : "";
     const donoLocal = localStorage.getItem('usuarioID');
 
-    // Monta o pacote de dados para o Render
     const dados = { 
         key: idDoGrupo, 
-        donoLocal, 
+        donoLocal: donoLocal, // O servidor checa se esse ID é o dono real
         nome, 
         link, 
         descricao, 
         categoria, 
-        foto,
-        codigoVip 
+        foto 
     };
 
     try {
@@ -891,18 +887,17 @@ window.executarEdicao = async function(idDoGrupo) {
         const res = await response.json();
 
         if (res.success) {
-            window.showAlert('✅ Alterações salvas com sucesso!');
+            window.showAlert('✅ Alterações salvas!');
             document.getElementById('modalEnvioGrupo').style.display = 'none';
-            // Opcional: recarregar a página ou a lista de grupos aqui
-            setTimeout(() => location.reload(), 1500);
+            setTimeout(() => location.reload(), 1000); // Recarrega para ver a mudança
         } else {
-            window.showAlert('❌ Erro: ' + (res.message || 'Falha ao editar'));
+            window.showAlert('❌ Erro: ' + res.message);
         }
     } catch (error) {
-        console.error("Erro na edição:", error);
-        window.showAlert('❌ Erro de conexão com o servidor Render.');
+        window.showAlert('❌ Erro ao conectar com o servidor.');
     }
 };
+
 
 
 // *** FUNÇÃO EXCLUIR GRUPO PERSONALIZADA (SEM CAIXA FEIA) ***
@@ -1239,15 +1234,14 @@ meusBtn.onclick = (e) => {
   e.preventDefault();
   const meuID = localStorage.getItem('usuarioID');
   
-  // Filtra comparando EXATAMENTE com o campo 'dono' do seu banco
+  // Filtra comparando o ID local com o dono registrado no servidor
   const meusAprovados = todosGrupos.filter(g => {
-    const idDoGrupo = String(g.dono || g.uid || g.usuarioID || "").trim();
-    return idDoGrupo === String(meuID).trim() && idDoGrupo !== "";
-});
-
+    const idDonoNoBanco = String(g.dono || g.uid || "").trim();
+    return idDonoNoBanco === String(meuID).trim();
+  });
 
   if (meusAprovados.length === 0) {
-      window.showAlert('Nenhum grupo encontrado para o seu ID. Verifique se o ADM já aprovou!');
+      window.showAlert('Nenhum grupo aprovado encontrado para você ainda.');
   } else {
       document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
       renderizarGrupos(meusAprovados, true); 
@@ -1255,7 +1249,6 @@ meusBtn.onclick = (e) => {
       window.scrollTo({top: 0, behavior: 'smooth'});
   }
 };
-
 
 
 window.copiarPixManual = async function(codigo, botao) {
