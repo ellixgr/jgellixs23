@@ -52,18 +52,28 @@ app.get('/admin/dados', verificarAdmin, async (req, res) => {
         });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
+
 app.get('/listar-grupos', async (req, res) => {
-    try {
-        const snap = await db.ref('grupos').once('value');
-        const grupos = [];
-        snap.forEach(child => {
-            grupos.push({ key: child.key, ...child.val() });
-        });
-        res.json(grupos);
-    } catch (e) {
-        res.status(500).json([]);
-    }
+  try {
+    const [gruposSnap, solicitacoesSnap] = await Promise.all([
+      db.ref('grupos').once('value'),
+      db.ref('solicitacoes').once('value')
+    ]);
+    const aprovados = gruposSnap.val() || {};
+    const pendentes = solicitacoesSnap.val() || {};
+    const listaTotal = [];
+    Object.keys(aprovados).forEach(key => {
+      listaTotal.push({ ...aprovados[key], key, aprovado: true });
+    });
+    Object.keys(pendentes).forEach(key => {
+      listaTotal.push({ ...pendentes[key], key, aprovado: false });
+    });
+    res.json(listaTotal);
+  } catch (error) {
+    res.status(500).json({ error: "Erro ao buscar dados" });
+  }
 });
+
 app.get('/admin/dados-publicos', async (req, res) => {
     try {
         const snapshot = await db.ref('videos_shopee').once('value');
