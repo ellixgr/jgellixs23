@@ -9,24 +9,20 @@
         :root { --primary: #b78cff; --vip: #ffd700; --danger: #ff4d4d; --success: #2ecc71; --blue: #3498db; --boost: #f1c40f; --dark: #2c3e50; }
         body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; flex-direction: column; align-items: center; margin: 0; }
         
-        /* Stats */
         .stats-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; width: 100%; max-width: 600px; margin-bottom: 20px; }
         .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-bottom: 4px solid var(--primary); }
         .stat-card h4 { margin: 0; font-size: 11px; color: #888; text-transform: uppercase; }
         .stat-card p { margin: 5px 0 0; font-size: 22px; font-weight: bold; color: var(--dark); }
 
-        /* Cards */
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 600px; margin-bottom: 20px; box-sizing: border-box; }
         input, select, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; font-weight: bold; }
         button { background: var(--primary); color: white; border: none; cursor: pointer; transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; }
         button:hover { filter: brightness(0.9); }
 
-        /* Gestão de Grupos */
         .item-gestao { background: white; padding: 15px; margin-top: 12px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 6px solid #ccc; position: relative; }
         .is-vip { border-left-color: var(--vip) !important; background: #fffdf0; }
         .is-boosted { border-left-color: var(--boost) !important; }
 
-        /* Badges */
         .badge { font-size: 10px; padding: 3px 7px; border-radius: 4px; font-weight: bold; text-transform: uppercase; display: inline-block; margin-right: 5px; margin-top: 5px; }
         .badge-vip { background: var(--vip); color: #000; }
         .badge-boost { background: var(--boost); color: #000; }
@@ -37,7 +33,7 @@
         .info-label { color: #888; display: block; font-size: 9px; }
 
         #area-abareta { display: none; width: 100%; max-width: 600px; }
-        .lista-scroll { max-height: 250px; overflow-y: auto; border: 1px solid #eee; border-radius: 10px; padding: 10px; background: #fafafa; }
+        .lista-scroll { max-height: 180px; overflow-y: auto; border: 1px solid #eee; border-radius: 10px; padding: 10px; background: #fafafa; margin-top: 10px; }
         
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; }
         .modal-content { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; }
@@ -47,14 +43,13 @@
 
     <div id="login-box" class="card">
         <h2 style="text-align:center; color:var(--primary)">🛡️ Admin Painel PRO</h2>
-        <input type="email" id="user-input" placeholder="E-mail Admin">
         <input type="password" id="pass-input" placeholder="Senha do Sistema">
         <button onclick="logar()"><i class="fa fa-shield-halved"></i> ACESSAR SERVIDOR</button>
     </div>
 
     <div id="area-abareta">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px;">
-            <span id="label-user" style="font-size: 12px; font-weight: bold; color: var(--primary);">CONEXÃO SEGURA ATIVA</span>
+            <span style="font-size: 12px; font-weight: bold; color: var(--primary);">CONEXÃO SEGURA ATIVA</span>
             <button onclick="logout()" style="width: auto; background: var(--danger); padding: 5px 15px; font-size: 11px;">SAIR</button>
         </div>
 
@@ -62,17 +57,38 @@
             <div class="stat-card"><h4>Acessos Site</h4><p id="count-visitas">0</p></div>
             <div class="stat-card"><h4>VIPs Ativos</h4><p id="count-vip">0</p></div>
             <div class="stat-card"><h4>Grupos Ativos</h4><p id="count-total">0</p></div>
-            <div class="stat-card"><h4>Usuários Totais</h4><p id="count-users">0</p></div>
+            <div class="stat-card"><h4>Usuários</h4><p id="count-users">0</p></div>
+        </div>
+
+        <div class="card" style="border-top: 4px solid var(--blue);">
+            <h3 style="margin:0;"><i class="fa fa-video"></i> Missões: Vídeos Shopee</h3>
+            <div id="lista-videos-shopee" class="lista-scroll"></div>
+            <div style="display: flex; gap: 5px; margin-top:10px">
+                <input type="text" id="video-link-input" placeholder="Link do vídeo Shopee..." style="margin-top:0">
+                <button onclick="addVideo()" style="width: auto; margin-top:0; background: var(--blue)"><i class="fa fa-plus"></i></button>
+            </div>
         </div>
 
         <div class="card" style="border-top: 4px solid var(--success);">
-            <h3 style="margin:0;"><i class="fa fa-plus-circle"></i> Controle de Moedas</h3>
+            <h3 style="margin:0;"><i class="fa fa-coins"></i> Controle de Moedas</h3>
             <input type="text" id="moeda-user-id" placeholder="ID do Usuário">
-            <input type="number" id="moeda-qtd" placeholder="Qtd Moedas">
+            <input type="number" id="moeda-qtd" placeholder="Quantidade">
             <button onclick="adicionarMoedas()" style="background:var(--success)">CONCEDER MOEDAS</button>
         </div>
 
-        <h2 style="font-size: 16px; color: var(--dark); margin-top: 30px;"><i class="fa fa-desktop"></i> MONITORAMENTO EM TEMPO REAL</h2>
+        <div class="card" style="border-top: 4px solid var(--vip);">
+            <h3 style="margin:0;"><i class="fa fa-star"></i> Gerar Código VIP</h3>
+            <select id="tempo-vip">
+                <option value="2">2 Horas</option>
+                <option value="24">24 Horas</option>
+                <option value="48">48 Horas</option>
+                <option value="240">10 Dias</option>
+            </select>
+            <button onclick="gerarVip()" style="background: var(--dark)">GERAR NOVO CÓDIGO</button>
+            <div id="lista-codigos-ativos" class="lista-scroll"></div>
+        </div>
+
+        <h2 style="font-size: 16px; color: var(--dark); margin-top: 30px;"><i class="fa fa-list"></i> MONITORAMENTO DE GRUPOS</h2>
         <div id="lista-grupos"></div>
     </div>
 
@@ -84,57 +100,35 @@
             <input type="text" id="edit-foto">
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="salvarEdicao()" style="background:var(--success)">SALVAR</button>
-                <button onclick="fecharModal()" style="background:#888">FECHAR</button>
+                <button onclick="fecharModal()" style="background:#888">CANCELAR</button>
             </div>
         </div>
     </div>
 
 <script>
     const API_BASE = "https://x23wzp.onrender.com";
+    let senhaDigitada = "";
     let idSendoEditado = null;
-    let senhaDigitada = ""; // Fica salva apenas na RAM do navegador
 
     async function logar() {
         const pass = document.getElementById('pass-input').value;
-        if(!pass) return alert("Digite a senha");
-
-        // Tenta buscar os dados usando a senha como chave de autorização
         try {
-            const res = await fetch(`${API_BASE}/admin/dados`, {
-                headers: { 'x-admin-pass': pass }
-            });
-
+            const res = await fetch(`${API_BASE}/admin/dados`, { headers: { 'x-admin-pass': pass } });
             if(res.ok) {
-                senhaDigitada = pass; // Senha correta, salva para as próximas chamadas
+                senhaDigitada = pass;
                 document.getElementById('login-box').style.display = 'none';
                 document.getElementById('area-abareta').style.display = 'block';
                 carregarDados();
-                setInterval(carregarDados, 15000); 
-            } else {
-                alert("Senha Inválida ou Acesso Negado pelo Servidor");
-            }
-        } catch (e) {
-            alert("Erro ao conectar com o servidor no Render");
-        }
+                setInterval(carregarDados, 15000);
+            } else { alert("Senha Incorreta!"); }
+        } catch (e) { alert("Erro de conexão com servidor."); }
     }
 
     function logout() { location.reload(); }
 
-    function formatarTempo(ms) {
-        if (!ms || ms < Date.now()) return "Expirado";
-        const diff = ms - Date.now();
-        const h = Math.floor(diff / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        return `${h}h ${m}m`;
-    }
-
     async function carregarDados() {
         try {
-            const res = await fetch(`${API_BASE}/admin/dados`, {
-                headers: { 'x-admin-pass': senhaDigitada }
-            });
-            if(!res.ok) return;
-            
+            const res = await fetch(`${API_BASE}/admin/dados`, { headers: { 'x-admin-pass': senhaDigitada } });
             const d = await res.json();
 
             document.getElementById('count-visitas').innerText = d.stats.visitas || 0;
@@ -142,101 +136,99 @@
             document.getElementById('count-total').innerText = d.stats.grupos || 0;
             document.getElementById('count-users').innerText = d.stats.users || 0;
 
+            renderVideos(d.videos);
+            renderCodigos(d.codigos);
             renderGrupos(d.grupos, d.usuarios);
-        } catch (e) { console.error("Erro na atualização"); }
+        } catch (e) { console.error("Erro ao atualizar"); }
+    }
+
+    function renderVideos(vids) {
+        const div = document.getElementById('lista-videos-shopee');
+        div.innerHTML = "";
+        if(!vids) return;
+        Object.keys(vids).forEach(id => {
+            div.innerHTML += `<div style="font-size:11px; padding:5px; border-bottom:1px solid #eee; display:flex; justify-content:space-between">
+                <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80%">${vids[id].link}</span>
+                <button onclick="apiCall('/admin/video/delete', {id:'${id}'})" style="width:auto; padding:2px 8px; margin:0; background:red">X</button>
+            </div>`;
+        });
+    }
+
+    function renderCodigos(cods) {
+        const div = document.getElementById('lista-codigos-ativos');
+        div.innerHTML = "";
+        if(!cods) return;
+        Object.keys(cods).forEach(c => {
+            if(!cods[c].usado) div.innerHTML += `<div style="font-size:12px; padding:3px; color:#555"><b>${c}</b> - ${cods[c].validadeHoras}h</div>`;
+        });
     }
 
     function renderGrupos(grupos, usuarios) {
         const div = document.getElementById('lista-grupos');
         div.innerHTML = "";
-        
+        if(!grupos) return;
         Object.keys(grupos).forEach(id => {
             const g = grupos[id];
             const donoId = g.dono || g.uid || "N/A";
             const dadosUsuario = usuarios ? usuarios[donoId] : null;
-            const moedasUsuario = dadosUsuario ? (dadosUsuario.moedas || 0) : 0;
-
+            const moedas = dadosUsuario ? (dadosUsuario.moedas || 0) : 0;
             const agora = Date.now();
-            const isVip = g.vip === true || g.vip === "true";
-            const expiraVip = g.vipExpiraEm || 0;
-            const isVipAtivo = isVip && expiraVip > agora;
-
-            const ultimoImpulso = g.ultimoImpulso || 0;
-            const tempoEsperaImpulso = 3600000; 
-            const isImpulsionado = (agora - ultimoImpulso) < tempoEsperaImpulso;
-            const tempoFaltaImpulso = formatarTempo(ultimoImpulso + tempoEsperaImpulso);
+            const isVip = (g.vip === true || g.vip === "true") && (g.vipExpiraEm > agora);
+            const isBoost = (agora - (g.ultimoImpulso || 0)) < 3600000;
 
             div.innerHTML += `
-                <div class="item-gestao ${isVipAtivo ? 'is-vip' : ''} ${isImpulsionado ? 'is-boosted' : ''}">
-                    <div style="display:flex; justify-content: space-between; align-items: flex-start;">
-                        <div>
-                            <b style="font-size:14px">${g.nome}</b><br>
-                            <span class="badge badge-id">ID: ${donoId}</span>
-                            <span class="badge badge-moeda"><i class="fa fa-coins"></i> ${moedasUsuario}</span>
-                        </div>
-                        <div style="text-align:right">
-                            ${isVipAtivo ? `<span class="badge badge-vip">⭐ VIP</span>` : ''}
-                            ${isImpulsionado ? `<span class="badge badge-boost">🚀 BOOST</span>` : ''}
-                        </div>
-                    </div>
-
+                <div class="item-gestao ${isVip ? 'is-vip' : ''} ${isBoost ? 'is-boosted' : ''}">
+                    <b>${g.nome}</b><br>
+                    <span class="badge badge-id">ID: ${donoId}</span>
+                    <span class="badge badge-moeda">$ ${moedas}</span>
+                    ${isVip ? `<span class="badge badge-vip">VIP</span>` : ''}
                     <div class="info-grid">
-                        <div>
-                            <span class="info-label">TEMPO VIP</span>
-                            <b>${isVipAtivo ? formatarTempo(expiraVip) : '---'}</b>
-                        </div>
-                        <div>
-                            <span class="info-label">PRÓX. IMPULSO</span>
-                            <b>${isImpulsionado ? tempoFaltaImpulso : 'LIVRE'}</b>
-                        </div>
-                        <div>
-                            <span class="info-label">CLIQUES</span>
-                            <b>${g.cliques || 0}</b>
-                        </div>
-                        <div>
-                            <span class="info-label">CATEGORIA</span>
-                            <b>${g.categoria || 'Geral'}</b>
-                        </div>
+                        <div><span class="info-label">VIP EXPIRA</span><b>${isVip ? formatarTempo(g.vipExpiraEm) : '---'}</b></div>
+                        <div><span class="info-label">IMPULSO</span><b>${isBoost ? formatarTempo((g.ultimoImpulso||0)+3600000) : 'LIVRE'}</b></div>
+                        <div><span class="info-label">CLIQUES</span><b>${g.cliques || 0}</b></div>
                     </div>
-
-                    <div style="display: flex; gap: 5px; margin-top: 10px;">
-                        <button onclick="abrirModal('${id}', '${g.nome}', '${g.link}', '${g.foto}')" style="background:var(--blue); padding:7px; font-size:10px">EDITAR</button>
-                        <button onclick="apiCall('/admin/grupo/delete', {id:'${id}'})" style="background:var(--danger); padding:7px; font-size:10px">EXCLUIR</button>
-                        <button onclick="copiarId('${donoId}')" style="background:var(--dark); padding:7px; font-size:10px">COPIAR ID</button>
+                    <div style="display:flex; gap:5px; margin-top:10px">
+                        <button onclick="abrirModal('${id}','${g.nome}','${g.link}','${g.foto}')" style="background:var(--blue); padding:5px; font-size:10px">EDITAR</button>
+                        <button onclick="apiCall('/admin/grupo/delete', {id:'${id}'})" style="background:var(--danger); padding:5px; font-size:10px">EXCLUIR</button>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
     }
 
-    function copiarId(id) {
-        navigator.clipboard.writeText(id);
-        alert("ID Copiado!");
+    function formatarTempo(ms) {
+        const diff = ms - Date.now();
+        if(diff < 0) return "Expirado";
+        const h = Math.floor(diff/3600000);
+        const m = Math.floor((diff%3600000)/60000);
+        return `${h}h ${m}m`;
     }
 
     async function apiCall(endpoint, data = {}) {
         try {
             const res = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'x-admin-pass': senhaDigitada
-                },
+                headers: { 'Content-Type': 'application/json', 'x-admin-pass': senhaDigitada },
                 body: JSON.stringify(data)
             });
-            const result = await res.json();
-            if(result.success) {
-                alert("Sucesso!");
-                carregarDados();
-            } else { alert("Erro: " + result.message); }
-        } catch (e) { alert("Erro de conexão"); }
+            const r = await res.json();
+            if(r.success) { carregarDados(); } else { alert(r.message); }
+        } catch (e) { alert("Erro na ação."); }
+    }
+
+    function addVideo() {
+        const link = document.getElementById('video-link-input').value;
+        if(link) apiCall('/admin/video/add', { link });
     }
 
     function adicionarMoedas() {
-        const id = document.getElementById('moeda-user-id').value.trim();
+        const uid = document.getElementById('moeda-user-id').value;
         const qtd = document.getElementById('moeda-qtd').value;
-        if(!id || !qtd) return alert("Dados incompletos");
-        apiCall('/admin/moedas/add', { uid: id, qtd: parseInt(qtd) });
+        apiCall('/admin/moedas/add', { uid, qtd: parseInt(qtd) });
+    }
+
+    function gerarVip() {
+        const h = document.getElementById('tempo-vip').value;
+        apiCall('/admin/vip/gerar', { horas: parseInt(h) });
     }
 
     function abrirModal(id, n, l, f) {
@@ -247,7 +239,6 @@
         document.getElementById('modalEdicao').style.display = 'flex';
     }
     function fecharModal() { document.getElementById('modalEdicao').style.display = 'none'; }
-    
     function salvarEdicao() {
         apiCall('/admin/grupo/edit', {
             id: idSendoEditado,
