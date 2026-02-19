@@ -27,22 +27,27 @@ if (!admin.apps.length) {
 }
 
 const db = admin.database();
-const SENHA_MESTRE = process.env.SENHA_MESTRE;
 
-// ==========================================
-//    ROTAS DO PAINEL ADM (CHAVE MESTRE)
-// ==========================================
+// --- ADICIONADO: VALIDAÇÃO DE SENHA DO RENDER ---
+const SENHA_MESTRE = process.env.ADMIN_PASS || process.env.SENHA_MESTRE;
 
-// Puxa todos os dados para o Painel de uma vez
-app.get('/admin/dados', async (req, res) => {
+const verificarAdmin = (req, res, next) => {
+    const senhaRecebida = req.headers['x-admin-pass'];
+    if (!senhaRecebida || senhaRecebida !== SENHA_MESTRE) {
+        return res.status(401).json({ success: false, message: "Acesso Negado: Senha Inválida" });
+    }
+    next();
+};
+// ------------------------------------------------
+
+// Puxa todos os dados para o Painel (ADICIONADO verificarAdmin)
+app.get('/admin/dados', verificarAdmin, async (req, res) => {
     try {
         const snapshot = await db.ref('/').once('value');
-        const d = snapshot.val() || {};
-        
+        const d = snapshot.val() || {};        
         const grupos = d.grupos || {};
         const usuarios = d.usuarios || {};
         const agora = Date.now();
-
         res.json({
             stats: {
                 visitas: d.visitas || 0,
@@ -73,10 +78,8 @@ app.get('/listar-grupos', async (req, res) => {
     }
 });
 
-
-// Aprovar ou Recusar solicitações
-// No seu arquivo do servidor Render
-app.post('/admin/decidir', async (req, res) => {
+// Aprovar ou Recusar solicitações (ADICIONADO verificarAdmin)
+app.post('/admin/decidir', verificarAdmin, async (req, res) => {
     const { id, aprovar } = req.body;
     try {
         const refSol = db.ref(`solicitacoes/${id}`);
@@ -84,7 +87,6 @@ app.post('/admin/decidir', async (req, res) => {
             const snap = await refSol.once('value');
             const dados = snap.val();
             if(dados) {
-                // Forçamos a conversão exata aqui
                 const expira = Number(dados.vipExpiraEm) || 0;
                 const ehVip = (dados.vip === true || dados.vip === "true");
 
@@ -92,7 +94,7 @@ app.post('/admin/decidir', async (req, res) => {
                     ...dados, 
                     status: 'aprovado', 
                     cliques: 0,
-                    vip: ehVip, // Salva como booleano puro
+                    vip: ehVip, 
                     vipExpiraEm: expira, 
                     criadoEm: Date.now() 
                 });
@@ -103,10 +105,8 @@ app.post('/admin/decidir', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
-
-
-// Adicionar Moedas via Painel
-app.post('/admin/moedas/add', async (req, res) => {
+// Adicionar Moedas via Painel (ADICIONADO verificarAdmin)
+app.post('/admin/moedas/add', verificarAdmin, async (req, res) => {
     const { uid, qtd } = req.body;
     try {
         await db.ref(`usuarios/${uid}/moedas`).transaction(atual => (atual || 0) + qtd);
@@ -114,8 +114,8 @@ app.post('/admin/moedas/add', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// Gerar Código VIP via Painel
-app.post('/admin/vip/gerar', async (req, res) => {
+// Gerar Código VIP via Painel (ADICIONADO verificarAdmin)
+app.post('/admin/vip/gerar', verificarAdmin, async (req, res) => {
     const { horas } = req.body;
     try {
         const cod = "VIP-" + crypto.randomBytes(3).toString('hex').toUpperCase();
@@ -129,23 +129,23 @@ app.post('/admin/vip/gerar', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// Vídeos Shopee (Add/Delete)
-app.post('/admin/video/add', async (req, res) => {
+// Vídeos Shopee (Add/Delete) (ADICIONADO verificarAdmin)
+app.post('/admin/video/add', verificarAdmin, async (req, res) => {
     try {
         await db.ref(`videos_shopee/${Date.now()}`).set({ link: req.body.link });
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-app.post('/admin/video/delete', async (req, res) => {
+app.post('/admin/video/delete', verificarAdmin, async (req, res) => {
     try {
         await db.ref(`videos_shopee/${req.body.id}`).remove();
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// Editar/Apagar Grupo via Monitoramento do Painel
-app.post('/admin/grupo/edit', async (req, res) => {
+// Editar/Apagar Grupo via Monitoramento do Painel (ADICIONADO verificarAdmin)
+app.post('/admin/grupo/edit', verificarAdmin, async (req, res) => {
     const { id, nome, link, foto } = req.body;
     try {
         await db.ref(`grupos/${id}`).update({ nome, link, foto });
@@ -153,7 +153,7 @@ app.post('/admin/grupo/edit', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-app.post('/admin/grupo/delete', async (req, res) => {
+app.post('/admin/grupo/delete', verificarAdmin, async (req, res) => {
     try {
         await db.ref(`grupos/${req.body.id}`).remove();
         res.json({ success: true });
@@ -161,7 +161,7 @@ app.post('/admin/grupo/delete', async (req, res) => {
 });
 
 // ==========================================
-//    ROTAS DO SITE (USUÁRIOS)
+//    ROTAS DO SITE (USUÁRIOS) - SEM ALTERAÇÃO
 // ==========================================
 
 app.post('/ganhar-moeda', async (req, res) => {
@@ -218,11 +218,9 @@ app.post('/editar-grupo', async (req, res) => {
         const snap = await refGrupo.once('value');
         const grupo = snap.val();
 
-        // Verifica se o grupo existe e se quem está editando é o dono
         if (snap.exists() && (grupo.dono === donoLocal || grupo.usuarioID === donoLocal)) {
             let updates = { nome, link, descricao, categoria, foto };
 
-            // NOVA LÓGICA: Se enviou um código, tenta validar
             if (codigoVip && codigoVip.trim() !== "") {
                 const codLimpo = codigoVip.trim();
                 const vSnap = await db.ref(`codigos_vips/${codLimpo}`).once('value');
@@ -243,8 +241,6 @@ app.post('/editar-grupo', async (req, res) => {
     }
 });
 
-
-// Rota para o usuário excluir o próprio grupo
 app.post('/excluir-grupo', async (req, res) => {
     const { key, donoLocal } = req.body;
     try {
@@ -260,7 +256,6 @@ app.post('/excluir-grupo', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// Rota para Impulsionar (Sobe o grupo para o topo)
 app.post('/impulsionar-grupo', async (req, res) => {
     const { key, donoLocal } = req.body;
     try {
@@ -269,7 +264,6 @@ app.post('/impulsionar-grupo', async (req, res) => {
         const grupo = snap.val();
 
         if (grupo && (grupo.dono === donoLocal || grupo.usuarioID === donoLocal)) {
-            // Atualiza o timestamp do último impulso
             await refGrupo.update({ ultimoImpulso: Date.now() });
             return res.json({ success: true });
         }
@@ -277,8 +271,6 @@ app.post('/impulsionar-grupo', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-
-// Limpeza de VIPs Expirados
 setInterval(async () => {
     const agora = Date.now();
     const snap = await db.ref('grupos').orderByChild('vip').equalTo(true).once('value');
@@ -289,7 +281,6 @@ setInterval(async () => {
     });
 }, 60000);
 
-// Rota para o usuário trocar moedas por um código VIP
 app.post('/resgatar-vip-server', async (req, res) => {
     const { usuarioID } = req.body;
     try {
@@ -298,20 +289,14 @@ app.post('/resgatar-vip-server', async (req, res) => {
         const moedas = snap.val()?.moedas || 0;
 
         if (moedas >= 30) {
-            // 1. Gera o código
             const cod = "VIP-" + crypto.randomBytes(3).toString('hex').toUpperCase();
-            
-            // 2. Salva o código no banco
             await db.ref(`codigos_vips/${cod}`).set({
                 status: "disponivel",
-                validadeHoras: 5, // VIP de 5 horas
+                validadeHoras: 5,
                 usado: false,
                 criadoEm: Date.now()
             });
-
-            // 3. Subtrai as 30 moedas do usuário
             await userRef.update({ moedas: moedas - 30 });
-
             return res.json({ success: true, codigo: cod });
         } else {
             return res.status(400).json({ success: false, message: "Moedas insuficientes!" });
@@ -321,7 +306,6 @@ app.post('/resgatar-vip-server', async (req, res) => {
         res.status(500).json({ success: false, message: "Erro interno no servidor." });
     }
 });
-
 
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Servidor Rodando na Porta ${PORT}`));
