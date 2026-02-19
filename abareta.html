@@ -48,13 +48,13 @@
     <div id="login-box" class="card">
         <h2 style="text-align:center; color:var(--primary)">🛡️ Admin Painel PRO</h2>
         <input type="email" id="user-input" placeholder="E-mail Admin">
-        <input type="password" id="pass-input" placeholder="Senha">
-        <button onclick="logar()"><i class="fa fa-shield-halved"></i> ENTRAR</button>
+        <input type="password" id="pass-input" placeholder="Senha do Sistema">
+        <button onclick="logar()"><i class="fa fa-shield-halved"></i> ACESSAR SERVIDOR</button>
     </div>
 
     <div id="area-abareta">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px;">
-            <span id="label-user" style="font-size: 12px; font-weight: bold; color: var(--primary);">SISTEMA DE GESTÃO ATIVO</span>
+            <span id="label-user" style="font-size: 12px; font-weight: bold; color: var(--primary);">CONEXÃO SEGURA ATIVA</span>
             <button onclick="logout()" style="width: auto; background: var(--danger); padding: 5px 15px; font-size: 11px;">SAIR</button>
         </div>
 
@@ -67,12 +67,12 @@
 
         <div class="card" style="border-top: 4px solid var(--success);">
             <h3 style="margin:0;"><i class="fa fa-plus-circle"></i> Controle de Moedas</h3>
-            <input type="text" id="moeda-user-id" placeholder="Cole o ID do Usuário aqui">
-            <input type="number" id="moeda-qtd" placeholder="Qtd Moedas (Ex: 100)">
+            <input type="text" id="moeda-user-id" placeholder="ID do Usuário">
+            <input type="number" id="moeda-qtd" placeholder="Qtd Moedas">
             <button onclick="adicionarMoedas()" style="background:var(--success)">CONCEDER MOEDAS</button>
         </div>
 
-        <h2 style="font-size: 16px; color: var(--dark); margin-top: 30px;"><i class="fa fa-desktop"></i> MONITORAMENTO DE GRUPOS</h2>
+        <h2 style="font-size: 16px; color: var(--dark); margin-top: 30px;"><i class="fa fa-desktop"></i> MONITORAMENTO EM TEMPO REAL</h2>
         <div id="lista-grupos"></div>
     </div>
 
@@ -92,20 +92,34 @@
 <script>
     const API_BASE = "https://x23wzp.onrender.com";
     let idSendoEditado = null;
+    let senhaDigitada = ""; // Fica salva apenas na RAM do navegador
 
-    function logar() {
+    async function logar() {
         const pass = document.getElementById('pass-input').value;
-        if(pass === "123") { // Altere sua senha aqui
-            document.getElementById('login-box').style.display = 'none';
-            document.getElementById('area-abareta').style.display = 'block';
-            carregarDados();
-            setInterval(carregarDados, 15000); 
-        } else { alert("Senha incorreta"); }
+        if(!pass) return alert("Digite a senha");
+
+        // Tenta buscar os dados usando a senha como chave de autorização
+        try {
+            const res = await fetch(`${API_BASE}/admin/dados`, {
+                headers: { 'x-admin-pass': pass }
+            });
+
+            if(res.ok) {
+                senhaDigitada = pass; // Senha correta, salva para as próximas chamadas
+                document.getElementById('login-box').style.display = 'none';
+                document.getElementById('area-abareta').style.display = 'block';
+                carregarDados();
+                setInterval(carregarDados, 15000); 
+            } else {
+                alert("Senha Inválida ou Acesso Negado pelo Servidor");
+            }
+        } catch (e) {
+            alert("Erro ao conectar com o servidor no Render");
+        }
     }
 
     function logout() { location.reload(); }
 
-    // Converte timestamp em "Faltam Xh Ym"
     function formatarTempo(ms) {
         if (!ms || ms < Date.now()) return "Expirado";
         const diff = ms - Date.now();
@@ -116,7 +130,11 @@
 
     async function carregarDados() {
         try {
-            const res = await fetch(`${API_BASE}/admin/dados`);
+            const res = await fetch(`${API_BASE}/admin/dados`, {
+                headers: { 'x-admin-pass': senhaDigitada }
+            });
+            if(!res.ok) return;
+            
             const d = await res.json();
 
             document.getElementById('count-visitas').innerText = d.stats.visitas || 0;
@@ -125,7 +143,7 @@
             document.getElementById('count-users').innerText = d.stats.users || 0;
 
             renderGrupos(d.grupos, d.usuarios);
-        } catch (e) { console.error("Erro ao carregar dados"); }
+        } catch (e) { console.error("Erro na atualização"); }
     }
 
     function renderGrupos(grupos, usuarios) {
@@ -135,8 +153,6 @@
         Object.keys(grupos).forEach(id => {
             const g = grupos[id];
             const donoId = g.dono || g.uid || "N/A";
-            
-            // Busca dados do usuário (moedas) na lista de usuários recebida
             const dadosUsuario = usuarios ? usuarios[donoId] : null;
             const moedasUsuario = dadosUsuario ? (dadosUsuario.moedas || 0) : 0;
 
@@ -146,7 +162,7 @@
             const isVipAtivo = isVip && expiraVip > agora;
 
             const ultimoImpulso = g.ultimoImpulso || 0;
-            const tempoEsperaImpulso = 3600000; // 1 hora
+            const tempoEsperaImpulso = 3600000; 
             const isImpulsionado = (agora - ultimoImpulso) < tempoEsperaImpulso;
             const tempoFaltaImpulso = formatarTempo(ultimoImpulso + tempoEsperaImpulso);
 
@@ -155,27 +171,27 @@
                     <div style="display:flex; justify-content: space-between; align-items: flex-start;">
                         <div>
                             <b style="font-size:14px">${g.nome}</b><br>
-                            <span class="badge badge-id">ID DONO: ${donoId}</span>
+                            <span class="badge badge-id">ID: ${donoId}</span>
                             <span class="badge badge-moeda"><i class="fa fa-coins"></i> ${moedasUsuario}</span>
                         </div>
                         <div style="text-align:right">
-                            ${isVipAtivo ? `<span class="badge badge-vip">⭐ VIP ATIVO</span>` : ''}
-                            ${isImpulsionado ? `<span class="badge badge-boost">🚀 IMPULSIONADO</span>` : ''}
+                            ${isVipAtivo ? `<span class="badge badge-vip">⭐ VIP</span>` : ''}
+                            ${isImpulsionado ? `<span class="badge badge-boost">🚀 BOOST</span>` : ''}
                         </div>
                     </div>
 
                     <div class="info-grid">
                         <div>
-                            <span class="info-label">STATUS VIP</span>
-                            <b>${isVipAtivo ? formatarTempo(expiraVip) : 'Inativo'}</b>
+                            <span class="info-label">TEMPO VIP</span>
+                            <b>${isVipAtivo ? formatarTempo(expiraVip) : '---'}</b>
                         </div>
                         <div>
-                            <span class="info-label">PRÓXIMO IMPULSO</span>
-                            <b>${isImpulsionado ? tempoFaltaImpulso : 'Disponível'}</b>
+                            <span class="info-label">PRÓX. IMPULSO</span>
+                            <b>${isImpulsionado ? tempoFaltaImpulso : 'LIVRE'}</b>
                         </div>
                         <div>
-                            <span class="info-label">CLIQUES NO GRUPO</span>
-                            <b><i class="fa fa-eye"></i> ${g.cliques || 0}</b>
+                            <span class="info-label">CLIQUES</span>
+                            <b>${g.cliques || 0}</b>
                         </div>
                         <div>
                             <span class="info-label">CATEGORIA</span>
@@ -184,9 +200,9 @@
                     </div>
 
                     <div style="display: flex; gap: 5px; margin-top: 10px;">
-                        <button onclick="abrirModal('${id}', '${g.nome}', '${g.link}', '${g.foto}')" style="background:var(--blue); padding:7px; font-size:11px">EDITAR</button>
-                        <button onclick="apiCall('/admin/grupo/delete', {id:'${id}'})" style="background:var(--danger); padding:7px; font-size:11px">EXCLUIR</button>
-                        <button onclick="copiarId('${donoId}')" style="background:var(--dark); padding:7px; font-size:11px">COPIAR ID</button>
+                        <button onclick="abrirModal('${id}', '${g.nome}', '${g.link}', '${g.foto}')" style="background:var(--blue); padding:7px; font-size:10px">EDITAR</button>
+                        <button onclick="apiCall('/admin/grupo/delete', {id:'${id}'})" style="background:var(--danger); padding:7px; font-size:10px">EXCLUIR</button>
+                        <button onclick="copiarId('${donoId}')" style="background:var(--dark); padding:7px; font-size:10px">COPIAR ID</button>
                     </div>
                 </div>
             `;
@@ -195,28 +211,31 @@
 
     function copiarId(id) {
         navigator.clipboard.writeText(id);
-        alert("ID Copiado: " + id);
+        alert("ID Copiado!");
     }
 
     async function apiCall(endpoint, data = {}) {
         try {
             const res = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'x-admin-pass': senhaDigitada // Envia a senha para autorizar a ação
+                },
                 body: JSON.stringify(data)
             });
             const result = await res.json();
             if(result.success) {
-                alert("Operação realizada!");
+                alert("Sucesso!");
                 carregarDados();
             } else { alert("Erro: " + result.message); }
-        } catch (e) { alert("Erro na API"); }
+        } catch (e) { alert("Erro de conexão"); }
     }
 
     function adicionarMoedas() {
         const id = document.getElementById('moeda-user-id').value.trim();
         const qtd = document.getElementById('moeda-qtd').value;
-        if(!id || !qtd) return alert("Preencha o ID e a Qtd");
+        if(!id || !qtd) return alert("Dados incompletos");
         apiCall('/admin/moedas/add', { uid: id, qtd: parseInt(qtd) });
     }
 
