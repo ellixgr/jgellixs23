@@ -121,24 +121,46 @@
         const segSpan = document.getElementById('segundos');
 
         btn.disabled = true;
-        btn.innerText = "ABRINDO VÍDEO...";
+        btn.innerText = "BUSCANDO VÍDEO...";
 
-        // Link padrão (já que o Firebase está blindado)
-        window.open('https://br.shp.ee/ehaxr08?smtt=0.0.9', '_blank');
+        try {
+            // 1. Busca os dados do servidor (onde estão os vídeos que você cadastrou)
+            const res = await fetch(`${API_URL}/admin/dados-publicos`);
+            const d = await res.json();
+            
+            let linkFinal = 'https://br.shp.ee/ehaxr08?smtt=0.0.9'; // Link reserva caso não tenha nenhum cadastrado
 
-        timerText.style.display = 'block';
-        let tempo = 15;
-        const intv = setInterval(() => {
-            tempo--;
-            segSpan.innerText = tempo;
-            if (tempo <= 0) {
-                clearInterval(intv);
-                timerText.style.display = 'none';
-                btn.innerText = "⌛ VALIDANDO...";
-                validarNoServidor();
+            if (d.videos && Object.keys(d.videos).length > 0) {
+                const listaVids = Object.values(d.videos);
+                // 2. Escolhe um vídeo aleatório da sua lista do painel
+                const aleatorio = listaVids[Math.floor(Math.random() * listaVids.length)];
+                linkFinal = aleatorio.link;
             }
-        }, 1000);
+
+            // 3. Abre o vídeo aleatório
+            window.open(linkFinal, '_blank');
+
+            // 4. Inicia o contador
+            timerText.style.display = 'block';
+            let tempo = 15;
+            const intv = setInterval(() => {
+                tempo--;
+                segSpan.innerText = tempo;
+                if (tempo <= 0) {
+                    clearInterval(intv);
+                    timerText.style.display = 'none';
+                    btn.innerText = "⌛ VALIDANDO...";
+                    validarNoServidor();
+                }
+            }, 1000);
+
+        } catch (e) {
+            // Se o servidor falhar, abre o link padrão para não travar o usuário
+            window.open('https://br.shp.ee/ehaxr08?smtt=0.0.9', '_blank');
+            console.error("Erro ao buscar vídeos, usando padrão.");
+        }
     };
+
 
     async function validarNoServidor() {
         const btn = document.getElementById('btn-video');
