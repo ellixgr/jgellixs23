@@ -33,31 +33,26 @@
     </style>
 </head>
 <body>
-
     <div id="login-box" class="card">
         <h2 style="text-align:center; color:var(--primary)">🛡️ Admin Painel PRO</h2>
         <input type="password" id="pass-input" placeholder="Senha do Sistema">
         <button onclick="logar()"><i class="fa fa-shield-halved"></i> ACESSAR SERVIDOR</button>
     </div>
-
     <div id="area-abareta">
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px;">
             <span style="font-size: 12px; font-weight: bold; color: var(--primary);">CONEXÃO SEGURA ATIVA</span>
             <button onclick="logout()" style="width: auto; background: var(--danger); padding: 5px 15px; font-size: 11px;">SAIR</button>
         </div>
-
         <div class="stats-container">
             <div class="stat-card"><h4>Acessos Site</h4><p id="count-visitas">0</p></div>
             <div class="stat-card"><h4>VIPs Ativos</h4><p id="count-vip">0</p></div>
             <div class="stat-card"><h4>Grupos Ativos</h4><p id="count-total">0</p></div>
             <div class="stat-card"><h4>Usuários</h4><p id="count-users">0</p></div>
         </div>
-
         <div class="card" style="border-top: 4px solid var(--danger);">
             <h3 style="margin:0;"><i class="fa fa-clock"></i> Solicitações Pendentes</h3>
             <div id="lista-solicitacoes" class="lista-scroll"></div>
         </div>
-
         <div class="card" style="border-top: 4px solid var(--blue);">
             <h3 style="margin:0;"><i class="fa fa-video"></i> Missões: Vídeos Shopee</h3>
             <div id="lista-videos-shopee" class="lista-scroll"></div>
@@ -66,7 +61,6 @@
                 <button onclick="addVideo()" style="width: auto; margin-top:0; background: var(--blue)"><i class="fa fa-plus"></i></button>
             </div>
         </div>
-
         <div class="card" style="border-top: 4px solid var(--success);">
             <h3 style="margin:0;"><i class="fa fa-coins"></i> Controle de Moedas</h3>
             <input type="text" id="moeda-user-id" placeholder="ID do Usuário">
@@ -85,11 +79,9 @@
             <button onclick="gerarVip()" style="background: var(--dark)">GERAR NOVO CÓDIGO</button>
             <div id="lista-codigos-ativos" class="lista-scroll"></div>
         </div>
-
         <h2 style="font-size: 16px; color: var(--dark); margin-top: 30px;"><i class="fa fa-list"></i> MONITORAMENTO DE GRUPOS</h2>
         <div id="lista-grupos"></div>
     </div>
-
     <div id="modalEdicao" class="modal">
         <div class="modal-content">
             <h3>Editar Grupo</h3>
@@ -102,22 +94,18 @@
             </div>
         </div>
     </div>
-
 <script>
-    const API_BASE = "https://x23wzp.onrender.com";
+    const API_BASE = "https://x23wzp.zeabur.app";
     let senhaDigitada = "";
     let autoUpdate = null;
-
     async function logar() {
         const pass = document.getElementById('pass-input').value;
         if(!pass) return alert("Digite a senha!");
-        
+       
         try {
-            // Teste de conexão enviando a senha no cabeçalho x-admin-pass
             const res = await fetch(`${API_BASE}/admin/dados`, { 
                 headers: { 'x-admin-pass': pass } 
             });
-
             if(res.ok) {
                 senhaDigitada = pass;
                 document.getElementById('login-box').style.display = 'none';
@@ -132,7 +120,6 @@
             alert("Erro ao conectar ao servidor. Verifique se ele está online."); 
         }
     }
-
     function logout() { clearInterval(autoUpdate); location.reload(); }
 
     async function carregarDados() {
@@ -142,7 +129,6 @@
             });
             if(!res.ok) return logout();
             const d = await res.json();
-
             document.getElementById('count-visitas').innerText = d.stats.visitas || 0;
             document.getElementById('count-vip').innerText = d.stats.vips || 0;
             document.getElementById('count-total').innerText = d.stats.grupos || 0;
