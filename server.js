@@ -187,11 +187,20 @@ app.post('/salvar-grupo', async (req, res) => {
         res.json({ success: true, message: "Enviado para aprovação!" });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
-app.post('/contar-clique', async (req, res) => {
+app.all('/registrar-clique', async (req, res) => {
     try {
-        await db.ref(`grupos/${req.body.key}/cliques`).transaction(c => (c || 0) + 1);
+        const key = req.body.key || req.query.key;
+        if (!key) {
+            return res.status(400).json({ success: false, message: "Chave ausente" });
+        }
+        const cliqueRef = db.ref(`grupos/${key}/cliques`);
+        await cliqueRef.transaction(c => (c || 0) + 1);   
+        console.log(`✅ Clique registrado para o grupo: ${key}`);
         res.json({ success: true });
-    } catch (e) { res.status(500).send(); }
+    } catch (e) {
+        console.error("Erro ao registrar clique:", e.message);
+        res.status(500).json({ success: false });
+    }
 });
 app.post('/editar-grupo', async (req, res) => {
     const { key, donoLocal, nome, link, descricao, categoria, foto, codigoVip } = req.body;
