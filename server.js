@@ -35,6 +35,23 @@ const verificarAdmin = (req, res, next) => {
     next();
 };
 
+// ADICIONE ISTO AQUI
+const verificarToken = async (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, message: "Token não fornecido" });
+    }
+    const token = authHeader.split(' ')[1];
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        req.uid = decodedToken.uid; // O ID real e seguro do usuário
+        next();
+    } catch (e) {
+        return res.status(401).json({ success: false, message: "Sessão expirada ou inválida" });
+    }
+};
+
+
 // --- ROTAS DE BUSCA E LISTAGEM ---
 
 app.get('/listar-grupos', async (req, res) => {
@@ -141,14 +158,17 @@ app.post('/salvar-grupo', async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-app.post('/editar-grupo', async (req, res) => {
-    const { key, donoLocal, nome, link, descricao, categoria, foto, codigoVip } = req.body;
+app.post('/editar-grupo', verificarToken, async (req, res) => {
+    const { key, nome, link, descricao, categoria, foto, codigoVip } = req.body;
+    const uidSeguro = req.uid; 
     try {
         const refGrupo = db.ref(`grupos/${key}`);
         const snap = await refGrupo.once('value');
         const grupo = snap.val();
-        if (snap.exists() && (grupo.dono === donoLocal || grupo.usuarioID === donoLocal)) {
+        
+        if (snap.exists() && (grupo.dono === uidSeguro || grupo.usuarioID === uidSeguro)) {
             let updates = { nome, link, descricao, categoria, foto };
+            // Manter a lógica do VIP que você já tinha...
             if (codigoVip && codigoVip.trim() !== "") {
                 const codLimpo = codigoVip.trim();
                 const vSnap = await db.ref(`codigos_vips/${codLimpo}`).once('value');
@@ -162,37 +182,39 @@ app.post('/editar-grupo', async (req, res) => {
             await refGrupo.update(updates);
             return res.json({ success: true, message: "Atualizado com sucesso!" });
         }
-        res.status(403).json({ success: false, message: "Acesso negado" });
+        res.status(403).json({ success: false, message: "Você não é o dono deste grupo!" });
     } catch (e) { res.status(500).json({ success: false, message: e.message }); }
 });
 
-app.post('/excluir-grupo', async (req, res) => {
-    const { key, donoLocal } = req.body;
+
+app.post('/excluir-grupo', verificarToken, async (req, res) => {
+    const { key } = req.body;
     try {
         const refGrupo = db.ref(`grupos/${key}`);
         const snap = await refGrupo.once('value');
         const grupo = snap.val();
-        if (grupo && (grupo.dono === donoLocal || grupo.usuarioID === donoLocal)) {
+        if (grupo && (grupo.dono === req.uid || grupo.usuarioID === req.uid)) {
             await refGrupo.remove();
             return res.json({ success: true });
         }
-        res.status(403).json({ success: false });
+        res.status(403).json({ success: false, message: "Sem permissão" });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-app.post('/impulsionar-grupo', async (req, res) => {
-    const { key, donoLocal } = req.body;
+app.post('/impulsionar-grupo', verificarToken, async (req, res) => {
+    const { key } = req.body;
     try {
         const refGrupo = db.ref(`grupos/${key}`);
         const snap = await refGrupo.once('value');
         const grupo = snap.val();
-        if (grupo && (grupo.dono === donoLocal || grupo.usuarioID === donoLocal)) {
+        if (grupo && (grupo.dono === req.uid || grupo.usuarioID === req.uid)) {
             await refGrupo.update({ ultimoImpulso: Date.now() });
             return res.json({ success: true });
         }
         res.status(403).json({ success: false });
     } catch (e) { res.status(500).json({ success: false }); }
 });
+
 
 // --- ROTAS ADMINISTRATIVAS ---
 
