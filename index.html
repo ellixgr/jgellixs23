@@ -971,13 +971,13 @@ function renderizarGrupos(lista, modoMeusGrupos = false) {
         btnEntrar.className = "btn-falso-entrar";
         btnEntrar.innerHTML = vipAtivo ? "⭐ ENTRAR NO GRUPO" : "ENTRAR NO GRUPO";
 btnEntrar.onclick = () => {
-    // 1. Registra o clique em segundo plano (usa fetch sem travar o usuário)
-    fetch(`https://x23wzp.zeabur.app/registrar-clique?key=${g.key}`, { method: 'GET', mode: 'no-cors' });
+    // 1. Registra o clique no servidor CORRETO (Cloudflare)
+    fetch(`https://imposed-gel-puzzles-consider.trycloudflare.com/registrar-clique?key=${g.key}`, { method: 'GET', mode: 'no-cors' });
 
-    // 2. Abre o anúncio em uma nova aba
+    // 2. Abre o anúncio
     window.open('https://www.effectivegatecpm.com/afavj9a2y?key=5875f3c51a281666d53e659422973930', '_blank');
 
-    // 3. Redireciona para o WhatsApp na mesma aba
+    // 3. Redireciona para o WhatsApp
     setTimeout(() => {
         window.location.href = g.link;
     }, 100); 
