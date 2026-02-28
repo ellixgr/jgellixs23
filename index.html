@@ -1050,8 +1050,8 @@ window.impulsionarGrupo = async function(key) {
     }
 
     try {
-        const auth = await import("https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js");
-        const token = await auth.getAuth().currentUser.getIdToken();
+const token = await auth.currentUser.getIdToken();
+
 
         const response = await fetch("https://x23wzp.zeabur.app/impulsionar-grupo", {
             method: 'POST',
@@ -1107,10 +1107,10 @@ meusBtn.onclick = async (e) => {
         const todos = await resp.json();
 
         // Filtra TODOS os grupos onde você é o dono, independente de estar aprovado ou não
-        const meusGruposFiltrados = todos.filter(g => {
-            const idDono = String(g.dono || g.usuarioID || "").trim();
-            return idDono === meuID;
-        });
+const meusGruposFiltrados = todos.filter(g => 
+    String(g.dono || g.usuarioID || "").trim() === String(meuID).trim()
+);
+
         
         if (meusGruposFiltrados.length === 0) {
             window.showAlert('Você ainda não tem grupos cadastrados ou eles estão aguardando aprovação inicial.');
