@@ -15,21 +15,23 @@
             min-height: 100vh;
             padding-bottom: 50px;
         }
+
         /* --- Cabeçalho --- */
         header {
             width: 100%;
             background: #fff;
-            padding: 25px;
+            padding: 20px;
             margin-bottom: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-        /* --- Foto Principal --- */
+
+        /* --- Foto Principal (Linktree) --- */
         .linktree-container {
             position: relative;
             width: 90%;
             max-width: 380px;
-            height: 160px; 
-            margin-bottom: 40px; /* Espaço maior antes dos anúncios */
+            height: 150px; 
+            margin-bottom: 30px;
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 5px 20px rgba(183, 140, 255, 0.3);
@@ -56,25 +58,41 @@
             font-weight: bold;
             font-size: 14px;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            pointer-events: none;
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
-        /* --- Anúncios Menores e Mais Baixos --- */
+
+        /* --- Espaçador de Anúncios --- */
+        .ad-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 20px; /* Espaço entre cada anúncio */
+            margin-top: 20px;
+        }
+
+        /* --- Anúncios de Imagem (Seus) --- */
         .ad-box {
-            width: 85%;
-            max-width: 310px; /* Tamanho reduzido */
-            margin-bottom: 15px;
+            width: 75%;
+            max-width: 280px; 
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             background: #fff;
-            transition: 0.3s;
         }
-        .ad-box img { width: 100%; display: block; cursor: pointer; }
-        
-        /* Afasta o primeiro anúncio da foto */
-        .first-ad { margin-top: 30px; }
+        .ad-box img { width: 100%; display: block; }
+
+        /* --- Estilo para o Banner Adsterra --- */
+        .adsterra-banner {
+            width: 300px;
+            height: 250px;
+            background: #ddd; /* Fundo cinza enquanto carrega */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            overflow: hidden;
+        }
 
         /* --- Menu Lateral --- */
         .menu-btn {
@@ -88,7 +106,6 @@
             border-radius: 10px;
             cursor: pointer;
             z-index: 2000;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         .side-menu {
             position: fixed;
@@ -96,7 +113,7 @@
             right: -300px;
             width: 260px;
             height: 100%;
-            background: rgba(255, 255, 255, 0.98);
+            background: white;
             padding: 60px 20px;
             transition: 0.4s;
             z-index: 1900;
@@ -110,52 +127,72 @@
             padding: 14px;
             margin-bottom: 12px;
             border-radius: 10px;
-            font-weight: 600;
-            font-size: 14px;
             border: 1px solid #f0f0f0;
+            font-weight: 600;
         }
-        .close-x { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 20px; }
+        .close-x { position: absolute; top: 20px; right: 20px; cursor: pointer; }
 
-        footer { text-align: center; color: #aaa; font-size: 11px; margin-top: 30px; }
+        footer { text-align: center; color: #aaa; font-size: 10px; margin-top: 40px; }
     </style>
 </head>
 <body>
+
     <div class="menu-btn" onclick="toggleMenu()">☰</div>
+
     <div class="side-menu" id="sideMenu">
         <div class="close-x" onclick="toggleMenu()">❌</div>
-        <h2 style="margin-bottom: 30px; border-bottom: 2px solid #b78cff; padding-bottom: 10px; font-size: 18px;">MENU</h2>      
-        <a href="https://ellixgr.github.io/x23wzp/ads" style="background: #f0f8ff; border-color: #00bfff;">
-            🇺🇸 Números Virtuais 🇧🇷
-        </a>      
-        <a href="https://br.shp.ee/5q1d37e?smtt=0.0.9" target="_blank">🛍️ Loja Acessórios</a>       
-        <a href="https://wa.me/5521977231625" target="_blank" style="background: #f5fff9; color: #128c7e !important;">
-            🟢 Suporte WhatsApp
-        </a>
+        <h2 style="margin-bottom: 20px; font-size: 18px;">MENU</h2>
+        <a href="https://ellixgr.github.io/x23wzp/ads" style="background: #f0f8ff;">🇺🇸 Números Virtuais 🇧🇷</a>
+        <a href="https://br.shp.ee/5q1d37e?smtt=0.0.9" target="_blank">🛍️ Loja Acessórios</a>
+        <a href="https://wa.me/5521977231625" target="_blank" style="background: #f5fff9; color: #128c7e;">🟢 Suporte WhatsApp</a>
     </div>
 
     <header></header>
+
     <a href="https://linktr.ee/Bronxs7" target="_blank" class="linktree-container">
         <img src="https://i.postimg.cc/nV2t5Cz1/1769082090576-(1).jpg" alt="Ver Grupos">
         <div class="btn-overlay">VER GRUPOS</div>
     </a>
-    <div class="ad-box first-ad">
-        <a href="https://www.tiktok.com/d/4/ZS91q1HKdapRv-ki0E3/" target="_blank">
-            <img src="https://i.postimg.cc/dQjhrMsK/1769968251192-(1).jpg" alt="Anúncio">
-        </a>
+
+    <div class="ad-wrapper">
+        
+        <div class="adsterra-banner">
+            <script type="text/javascript">
+                atOptions = {
+                    'key' : '3e1fe799cb19b129dba9470a4e2f2556',
+                    'format' : 'iframe',
+                    'height' : 250,
+                    'width' : 300,
+                    'params' : {}
+                };
+            </script>
+            <script type="text/javascript" src="https://www.highperformanceformat.com/3e1fe799cb19b129dba9470a4e2f2556/invoke.js"></script>
+        </div>
+
+        <div class="ad-box">
+            <a href="https://www.tiktok.com/d/4/ZS91q1HKdapRv-ki0E3/" target="_blank">
+                <img src="https://i.postimg.cc/dQjhrMsK/1769968251192-(1).jpg" alt="TikTok">
+            </a>
+        </div>
+
+        <div class="ad-box">
+            <a href="https://soupopular.net/ref/bagau" target="_blank">
+                <img src="https://files.catbox.moe/k4dtyg.jpg" alt="Popular">
+            </a>
+        </div>
+
+        <div class="ad-box">
+            <a href="https://br.shp.ee/5q1d37e?smtt=0.0.9" target="_blank">
+                <img src="https://files.catbox.moe/xjuhw5.png" alt="Shopee">
+            </a>
+        </div>
+
     </div>
-    <div class="ad-box">
-        <a href="https://soupopular.net/ref/bagau" target="_blank">
-            <img src="https://files.catbox.moe/k4dtyg.jpg" alt="Anúncio">
-        </a>
-    </div>
-    <div class="ad-box">
-        <a href="https://br.shp.ee/5q1d37e?smtt=0.0.9" target="_blank">
-            <img src="https://files.catbox.moe/xjuhw5.png" alt="Anúncio">
-        </a>
-    </div>
-    <footer>
-        © 2026
-    </footer>
+
+    <footer>© 2026</footer>
+
+    <script src="https://pl28642215.effectivegatecpm.com/b9/7f/04/b97f0402af5fa803ef8d137e4050caf4.js"></script>
+
     <script>
         function toggleMenu() {
             document.getElementById('sideMenu').classList.toggle('active');
