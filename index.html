@@ -5,196 +5,34 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Grupos Whatsapp💬</title>
     <meta name="robots" content="noindex, nofollow">
-
     <style>
-        :root {
-            --primary: #b78cff;
-            --led-blue: #00d2ff;
-            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #d6dee9 100%);
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        /* Impede seleção de texto para dificultar cópia */
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg-gradient);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            padding-bottom: 50px;
-            user-select: none; 
-            -webkit-user-select: none;
-        }
-
-        header {
-            width: 100%;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            margin-bottom: 10px;
-        }
-
-        .aviso-click {
-            font-size: 11px;
-            color: #ff4444;
-            font-weight: 900;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            text-align: center;
-            text-shadow: 1px 1px 0px white;
-        }
-
-        /* --- CONTAINER COM BORDA LED ANIMADA --- */
-        .led-box {
-            position: relative;
-            width: 92%;
-            max-width: 380px;
-            height: 160px;
-            padding: 3px; /* Espessura da borda led */
-            background: #000;
-            border-radius: 23px;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);
-            margin-bottom: 20px;
-        }
-
-        /* O efeito do LED correndo */
-        .led-box::before {
-            content: '';
-            position: absolute;
-            width: 150%;
-            height: 150%;
-            background-image: conic-gradient(transparent, transparent, transparent, var(--led-blue));
-            animation: rotateLed 3s linear infinite;
-        }
-
-        @keyframes rotateLed {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .linktree-container {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            border-radius: 20px; 
-            overflow: hidden;
-            z-index: 1;
-            background: #fff;
-            display: block;
-        }
-        
-        .linktree-container img { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-            transition: transform 0.5s;
-        }
-        /* BOTÃO PULSANTE */
-        .btn-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(8px);
-            color: white;
-            padding: 12px 25px;
-            border-radius: 50px; 
-            border: 2px solid var(--led-blue);
-            font-weight: 800;
-            font-size: 15px;
-            text-transform: uppercase;
-            box-shadow: 0 0 15px var(--led-blue);
-            animation: pulse 2s infinite ease-in-out;
-            pointer-events: none;
-            z-index: 2;
-        }
-        @keyframes pulse {
-            0% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 10px var(--led-blue); }
-            50% { transform: translate(-50%, -50%) scale(1.08); box-shadow: 0 0 25px var(--led-blue); }
-            100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 10px var(--led-blue); }
-        }
-        .section-title {
-            font-size: 12px;
-            font-weight: 700;
-            color: #888;
-            text-transform: uppercase;
-            margin: 20px 0 10px;
-            letter-spacing: 1px;
-        }
-
-        .ad-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            gap: 20px; 
-        }
-
-        .ad-box {
-            width: 85%;
-            max-width: 300px; 
-            border-radius: 0; 
-            overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            background: #fff;
-            border: 1px solid #ddd;
-        }
-        .ad-box img { width: 100%; display: block; }
-
-        .adsterra-banner {
-            width: 300px;
-            height: 250px;
-            background: #fff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .menu-btn {
-            position: fixed;
-            top: 10px;
-            right: 15px;
-            font-size: 22px;
-            background: #fff;
-            padding: 8px 12px;
-            border-radius: 10px;
-            cursor: pointer;
-            z-index: 2001;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
-        .side-menu {
-            position: fixed;
-            top: 0;
-            right: -300px;
-            width: 260px;
-            height: 100%;
-            background: white;
-            padding: 60px 20px;
-            transition: 0.4s;
-            z-index: 2000;
-        }
-        .side-menu.active { right: 0; }
-        .side-menu a {
-            display: block;
-            text-decoration: none;
-            color: #333;
-            padding: 14px;
-            margin-bottom: 12px;
-            border-radius: 10px;
-            background: #f8f8f8;
-            font-weight: 600;
-        }
-        .close-x { position: absolute; top: 20px; right: 20px; cursor: pointer; }
-        footer { text-align: center; color: #aaa; font-size: 10px; margin-top: 40px; }
+        :root {--primary: #b78cff;--led-blue: #00d2ff;--bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #d6dee9 100%);}
+        * {box-sizing: border-box; margin: 0; padding: 0;}
+        body {font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;background: var(--bg-gradient);display: flex;flex-direction: column;align-items: center;min-height: 100vh;padding-bottom: 50px;user-select: none;-webkit-user-select: none;}
+        header {width: 100%;height: 50px;background: rgba(255, 255, 255, 0.8);backdrop-filter: blur(10px);margin-bottom: 10px;}
+        .aviso-click {font-size: 11px;color: #ff4444;font-weight: 900;margin-bottom: 8px;text-transform: uppercase;text-align: center;text-shadow: 1px 1px 0px white;}
+        .led-box {position: relative;width: 92%;max-width: 380px;height: 160px;padding: 3px;background: #000;border-radius: 23px;overflow: hidden;display: flex;justify-content: center;align-items: center;box-shadow: 0 0 20px rgba(0, 210, 255, 0.4);margin-bottom: 20px;z-index: 9999;}
+        .led-box::before {content: '';position: absolute;width: 150%;height: 150%;background-image: conic-gradient(transparent, transparent, transparent, var(--led-blue));animation: rotateLed 3s linear infinite;}
+        @keyframes rotateLed {0% {transform: rotate(0deg);} 100% {transform: rotate(360deg);}}
+        .linktree-container {position: relative;width: 100%;height: 100%;border-radius: 20px;overflow: hidden;z-index: 10000;background: #fff;display: block;}
+        .linktree-container img {width: 100%;height: 100%;object-fit: cover;}
+        .btn-overlay {position: absolute;top: 50%;left: 50%;transform: translate(-50%, -50%);background: rgba(0, 0, 0, 0.6);backdrop-filter: blur(8px);color: white;padding: 12px 25px;border-radius: 50px;border: 2px solid var(--led-blue);font-weight: 800;font-size: 15px;text-transform: uppercase;box-shadow: 0 0 15px var(--led-blue);animation: pulse 2s infinite ease-in-out;pointer-events: none;z-index: 10001;}
+        @keyframes pulse {0% {transform: translate(-50%, -50%) scale(1);box-shadow: 0 0 10px var(--led-blue);} 50% {transform: translate(-50%, -50%) scale(1.08);box-shadow: 0 0 25px var(--led-blue);} 100% {transform: translate(-50%, -50%) scale(1);box-shadow: 0 0 10px var(--led-blue);}}
+        .section-title {font-size: 12px;font-weight: 700;color: #888;text-transform: uppercase;margin: 20px 0 10px;letter-spacing: 1px;}
+        .ad-wrapper {display: flex;flex-direction: column;align-items: center;width: 100%;gap: 20px;}
+        .ad-box {width: 85%;max-width: 300px;border-radius: 0;overflow: hidden;box-shadow: 0 4px 10px rgba(0,0,0,0.1);background: #fff;border: 1px solid #ddd;}
+        .ad-box img {width: 100%;display: block;}
+        .adsterra-banner {width: 300px;height: 250px;background: #fff;box-shadow: 0 4px 10px rgba(0,0,0,0.1);}
+        .menu-btn {position: fixed;top: 10px;right: 15px;font-size: 22px;background: #fff;padding: 8px 12px;border-radius: 10px;cursor: pointer;z-index: 20000;box-shadow: 0 2px 5px rgba(0,0,0,0.2);}
+        .side-menu {position: fixed;top: 0;right: -300px;width: 260px;height: 100%;background: white;padding: 60px 20px;transition: 0.4s;z-index: 19999;}
+        .side-menu.active {right: 0;}
+        .side-menu a {display: block;text-decoration: none;color: #333;padding: 14px;margin-bottom: 12px;border-radius: 10px;background: #f8f8f8;font-weight: 600;}
+        .close-x {position: absolute;top: 20px;right: 20px;cursor: pointer;}
+        footer {text-align: center;color: #aaa;font-size: 10px;margin-top: 40px;}
     </style>
 </head>
-<body oncontextmenu="return false;"> <div class="menu-btn" onclick="toggleMenu()">☰</div>
+<body oncontextmenu="return false;"> 
+    <div class="menu-btn" onclick="toggleMenu()">☰</div>
     <div class="side-menu" id="sideMenu">
         <div class="close-x" onclick="toggleMenu()">❌</div>
         <h2 style="margin-bottom: 20px;">MENU</h2>
@@ -213,9 +51,7 @@
     <p class="section-title">Publicidade</p>
     <div class="ad-wrapper">
         <div class="adsterra-banner">
-            <script type="text/javascript">
-                atOptions = { 'key' : '3e1fe799cb19b129dba9470a4e2f2556', 'format' : 'iframe', 'height' : 250, 'width' : 300, 'params' : {} };
-            </script>
+            <script type="text/javascript">atOptions = {'key':'3e1fe799cb19b129dba9470a4e2f2556','format':'iframe','height':250,'width':300,'params':{}};</script>
             <script type="text/javascript" src="https://www.highperformanceformat.com/3e1fe799cb19b129dba9470a4e2f2556/invoke.js"></script>
         </div>
         <p class="section-title">Parceiros</p>
@@ -228,22 +64,11 @@
     <footer>© 2026 BRONXS7</footer>
     <script src="https://pl28642215.effectivegatecpm.com/b9/7f/04/b97f0402af5fa803ef8d137e4050caf4.js"></script>
     <script>
-        document.onkeydown = function(e) {
-            if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74))) {
-                return false;
-            }
-        };
-
-        function toggleMenu() {
-            document.getElementById('sideMenu').classList.toggle('active');
-        }
+        document.onkeydown = function(e) {if(e.keyCode == 123 || (e.ctrlKey && e.shiftKey && (e.keyCode == 73 || e.keyCode == 74))) return false;};
+        function toggleMenu() {document.getElementById('sideMenu').classList.toggle('active');}
         let clickedOnce = false;
-        function handleAdClick(e) {
-            if (!clickedOnce) {
-                clickedOnce = true;
-            }
-        }
-        if (top !== self) { top.location = self.location; }
+        function handleAdClick(e) {if (!clickedOnce) clickedOnce = true;}
+        if (top !== self) {top.location = self.location;}
     </script>
 </body>
 </html>
